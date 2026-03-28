@@ -45,7 +45,7 @@ export function TimerLayout({ title, subtitle, phase, onBack, children }: TimerL
         </div>
 
         {/* Spacer to balance the layout */}
-        <div className="w-[7.5rem]" />
+        <div className="w-12" />
       </header>
 
       {/* ── Content: full viewport, centered ── */}
