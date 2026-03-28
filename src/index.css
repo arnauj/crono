@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+button, a, [role="button"], input[type="button"], input[type="submit"], select, label[for] {
+  cursor: pointer;
+}
+
+body {
+  font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  background: #0a0a0a;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.timer-digits {
+  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  font-family: inherit;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Smooth background color transitions */
+.bg-transition {
+  transition: background-color 0.5s ease;
+}
+
+/* Pulse for countdown digits */
+@keyframes countdown-pop {
+  0%   { transform: scale(1.12); opacity: 0.7; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+.animate-countdown-pop {
+  animation: countdown-pop 0.4s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* Subtle glow on active digits */
+.timer-glow {
+  text-shadow: 0 0 60px rgba(255,255,255,0.08);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+/* Focus-visible for keyboard accessibility */
+:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+  outline: none;
+}
