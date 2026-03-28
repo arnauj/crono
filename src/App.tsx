@@ -98,7 +98,7 @@ function App() {
           onClick={toggleFullscreen}
           aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
           className="
-            flex items-center justify-center w-12 h-12 rounded-2xl
+            hidden md:flex items-center justify-center w-12 h-12 rounded-2xl
             bg-white/[0.06] border border-white/[0.08]
             text-gray-300
             hover:bg-white/[0.12] hover:text-white hover:border-white/[0.15]
