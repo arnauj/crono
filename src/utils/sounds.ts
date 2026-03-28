@@ -1,13 +1,26 @@
-const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
+const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
 
 let audioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext {
   if (!audioCtx) {
-    audioCtx = new AudioContext();
+    audioCtx = new AudioContextClass();
+  }
+  // iOS Safari suspends AudioContext until resumed from a user gesture
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
   }
   return audioCtx;
 }
+
+// Unlock audio on first user interaction (required by iOS Safari)
+function unlockAudio() {
+  getAudioContext();
+  document.removeEventListener('touchstart', unlockAudio, true);
+  document.removeEventListener('click', unlockAudio, true);
+}
+document.addEventListener('touchstart', unlockAudio, true);
+document.addEventListener('click', unlockAudio, true);
 
 function isSoundEnabled(): boolean {
   try {
