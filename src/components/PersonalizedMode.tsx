@@ -5,6 +5,8 @@ import { Controls } from './Controls';
 import type { BlockType, TrainingBlock, TabataConfig, ForTimeConfig, EmomConfig, AmrapConfig } from '../types/timer';
 import { useTimer, buildTabataSegments, buildForTimeSegments, buildEmomSegments, buildAmrapSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
+import { useT } from '../hooks/useI18n';
+import { t as tRaw } from '../utils/i18n';
 
 interface PersonalizedModeProps { onBack: () => void; }
 
@@ -20,14 +22,12 @@ function defaultConfig(type: BlockType): TrainingBlock['config'] {
   }
 }
 
-function blockLabel(type: BlockType): string {
-  switch (type) {
-    case 'tabata': return 'Tabata';
-    case 'fortime': return 'For Time';
-    case 'emom': return 'EMOM';
-    case 'amrap': return 'AMRAP';
-  }
-}
+const blockLabelKeys: Record<BlockType, string> = {
+  tabata: 'mode.tabata',
+  fortime: 'mode.fortime',
+  emom: 'mode.emom',
+  amrap: 'mode.amrap',
+};
 
 function buildBlockSegments(block: TrainingBlock) {
   switch (block.type) {
@@ -60,18 +60,15 @@ function ConfigRow({ label, value, onChange, min = 0, suffix }: {
         <button
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          aria-label={`Decrease ${label}`}
           className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-xl hover:bg-white/[0.12] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
         >&minus;</button>
         <input
           type="number" value={value} min={min}
           onChange={(e) => onChange(Math.max(min, parseInt(e.target.value) || min))}
-          aria-label={`${label} value`}
           className="w-14 h-11 bg-white/[0.04] rounded-lg text-white text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-white/20"
         />
         <button
           onClick={() => onChange(value + 1)}
-          aria-label={`Increase ${label}`}
           className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-xl hover:bg-white/[0.12] hover:text-white active:scale-90 transition-all"
         >+</button>
       </div>
@@ -80,10 +77,10 @@ function ConfigRow({ label, value, onChange, min = 0, suffix }: {
 }
 
 /* ── Block card ── */
-function BlockCard({ block, index, total, onChange, onRemove, onMoveUp, onMoveDown, isFirst, isLast }: {
+function BlockCard({ block, index, total, onChange, onRemove, onMoveUp, onMoveDown, isFirst, isLast, t }: {
   block: TrainingBlock; index: number; total: number;
   onChange: (b: TrainingBlock) => void; onRemove: () => void; onMoveUp: () => void; onMoveDown: () => void;
-  isFirst: boolean; isLast: boolean;
+  isFirst: boolean; isLast: boolean; t: typeof tRaw;
 }) {
   const updateConfig = (partial: Partial<TrainingBlock['config']>) =>
     onChange({ ...block, config: { ...block.config, ...partial } });
@@ -98,20 +95,20 @@ function BlockCard({ block, index, total, onChange, onRemove, onMoveUp, onMoveDo
           <span className={`${colors.bg} ${colors.text} text-sm font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider`}>
             {index + 1}/{total}
           </span>
-          <span className={`${colors.text} text-lg font-bold`}>{blockLabel(block.type)}</span>
+          <span className={`${colors.text} text-lg font-bold`}>{t(blockLabelKeys[block.type])}</span>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-1">
-          <button onClick={onMoveUp} disabled={isFirst} aria-label="Move up"
+          <button onClick={onMoveUp} disabled={isFirst}
             className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:text-white hover:bg-white/[0.08] active:scale-90 disabled:opacity-15 transition-all">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
           </button>
-          <button onClick={onMoveDown} disabled={isLast} aria-label="Move down"
+          <button onClick={onMoveDown} disabled={isLast}
             className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:text-white hover:bg-white/[0.08] active:scale-90 disabled:opacity-15 transition-all">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
           </button>
-          <button onClick={onRemove} aria-label={`Remove block ${index + 1}`}
+          <button onClick={onRemove}
             className="w-9 h-9 flex items-center justify-center rounded-xl text-red-400/60 hover:text-red-400 hover:bg-red-500/10 active:scale-90 transition-all">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
@@ -120,13 +117,13 @@ function BlockCard({ block, index, total, onChange, onRemove, onMoveUp, onMoveDo
 
       {/* ── Type selector tabs ── */}
       <div className="flex gap-1.5 px-5 pb-3">
-        {allTypes.map((t) => {
-          const active = block.type === t;
-          const c = typeColors[t];
+        {allTypes.map((tp) => {
+          const active = block.type === tp;
+          const c = typeColors[tp];
           return (
             <button
-              key={t}
-              onClick={() => { if (!active) onChange({ ...block, type: t, config: defaultConfig(t), name: blockLabel(t) }); }}
+              key={tp}
+              onClick={() => { if (!active) onChange({ ...block, type: tp, config: defaultConfig(tp), name: t(blockLabelKeys[tp]) }); }}
               className={`
                 flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider
                 transition-all duration-150
@@ -136,7 +133,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMoveUp, onMoveDo
                 }
               `}
             >
-              {blockLabel(t)}
+              {t(blockLabelKeys[tp])}
             </button>
           );
         })}
@@ -146,24 +143,24 @@ function BlockCard({ block, index, total, onChange, onRemove, onMoveUp, onMoveDo
       <div className="px-5 pb-4">
         {block.type === 'tabata' && (
           <>
-            <ConfigRow label="Rounds" value={(block.config as TabataConfig).rounds} onChange={(v) => updateConfig({ rounds: v })} min={1} />
-            <ConfigRow label="Work" value={(block.config as TabataConfig).workSeconds} onChange={(v) => updateConfig({ workSeconds: v })} min={1} suffix="sec" />
-            <ConfigRow label="Rest" value={(block.config as TabataConfig).restSeconds} onChange={(v) => updateConfig({ restSeconds: v })} suffix="sec" />
+            <ConfigRow label={t('label.rounds')} value={(block.config as TabataConfig).rounds} onChange={(v) => updateConfig({ rounds: v })} min={1} />
+            <ConfigRow label={t('label.work')} value={(block.config as TabataConfig).workSeconds} onChange={(v) => updateConfig({ workSeconds: v })} min={1} suffix={t('suffix.sec')} />
+            <ConfigRow label={t('label.rest')} value={(block.config as TabataConfig).restSeconds} onChange={(v) => updateConfig({ restSeconds: v })} suffix={t('suffix.sec')} />
           </>
         )}
         {block.type === 'fortime' && (
-          <ConfigRow label="Time cap" value={(block.config as ForTimeConfig).minutes} onChange={(v) => updateConfig({ minutes: v })} min={1} suffix="min" />
+          <ConfigRow label={t('label.timeCap')} value={(block.config as ForTimeConfig).minutes} onChange={(v) => updateConfig({ minutes: v })} min={1} suffix={t('suffix.min')} />
         )}
         {block.type === 'emom' && (
           <>
-            <ConfigRow label="Every" value={(block.config as EmomConfig).intervalMinutes} onChange={(v) => updateConfig({ intervalMinutes: v })} suffix="min" />
-            <ConfigRow label="And" value={(block.config as EmomConfig).intervalSeconds} onChange={(v) => updateConfig({ intervalSeconds: v })} suffix="sec" />
-            <ConfigRow label="Rounds" value={(block.config as EmomConfig).rounds} onChange={(v) => updateConfig({ rounds: v })} min={1} />
-            <ConfigRow label="Rest" value={(block.config as EmomConfig).restSeconds} onChange={(v) => updateConfig({ restSeconds: v })} suffix="sec" />
+            <ConfigRow label={t('label.every')} value={(block.config as EmomConfig).intervalMinutes} onChange={(v) => updateConfig({ intervalMinutes: v })} suffix={t('suffix.min')} />
+            <ConfigRow label={t('label.and')} value={(block.config as EmomConfig).intervalSeconds} onChange={(v) => updateConfig({ intervalSeconds: v })} suffix={t('suffix.sec')} />
+            <ConfigRow label={t('label.rounds')} value={(block.config as EmomConfig).rounds} onChange={(v) => updateConfig({ rounds: v })} min={1} />
+            <ConfigRow label={t('label.rest')} value={(block.config as EmomConfig).restSeconds} onChange={(v) => updateConfig({ restSeconds: v })} suffix={t('suffix.sec')} />
           </>
         )}
         {block.type === 'amrap' && (
-          <ConfigRow label="Duration" value={(block.config as AmrapConfig).minutes} onChange={(v) => updateConfig({ minutes: v })} min={1} suffix="min" />
+          <ConfigRow label={t('label.duration')} value={(block.config as AmrapConfig).minutes} onChange={(v) => updateConfig({ minutes: v })} min={1} suffix={t('suffix.min')} />
         )}
       </div>
     </div>
@@ -172,6 +169,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMoveUp, onMoveDo
 
 /* ── Main ── */
 export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
+  const t = useT();
   const [blocks, setBlocks] = useState<TrainingBlock[]>(() =>
     loadSetting<TrainingBlock[]>('personalized-blocks', [
       { id: nextId(), type: 'emom', name: 'EMOM', config: { intervalMinutes: 1, intervalSeconds: 0, rounds: 10, restSeconds: 0 } },
@@ -179,7 +177,6 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
   );
   const allSegments = useMemo(() => blocks.flatMap(buildBlockSegments), [blocks]);
 
-  // Precompute mapping: segment index → block index
   const segmentToBlock = useMemo(() => {
     const map: number[] = [];
     blocks.forEach((block, blockIdx) => {
@@ -199,17 +196,17 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
   const addBlock = useCallback(() => setBlocks((p) => [...p, { id: nextId(), type: 'tabata', name: 'Tabata', config: defaultConfig('tabata') }]), []);
   const removeBlock = useCallback((id: string) => setBlocks((p) => p.filter((b) => b.id !== id)), []);
   const updateBlock = useCallback((id: string, b: TrainingBlock) => setBlocks((p) => p.map((x) => x.id === id ? b : x)), []);
-  const moveBlock = useCallback((i: number, d: -1 | 1) => setBlocks((p) => { const n = [...p]; const t = i + d; if (t < 0 || t >= n.length) return p; [n[i], n[t]] = [n[t], n[i]]; return n; }), []);
+  const moveBlock = useCallback((i: number, d: -1 | 1) => setBlocks((p) => { const n = [...p]; const j = i + d; if (j < 0 || j >= n.length) return p; [n[i], n[j]] = [n[j], n[i]]; return n; }), []);
 
   const segIdx = state.segmentIndex ?? 0;
   const activeBlockIndex = segmentToBlock[segIdx] ?? 0;
   const currentBlock = blocks[activeBlockIndex];
   const subtitle = state.phase !== 'idle' && state.phase !== 'done' && currentBlock
-    ? `Block ${activeBlockIndex + 1}/${blocks.length} — ${currentBlock.name}`
-    : state.phase === 'done' ? `${blocks.length} blocks completed` : undefined;
+    ? t('sub.blockOf', { current: activeBlockIndex + 1, total: blocks.length, name: t(blockLabelKeys[currentBlock.type]) })
+    : state.phase === 'done' ? t('sub.blocksCompleted', { total: blocks.length }) : undefined;
 
   return (
-    <TimerLayout title="Custom" subtitle={subtitle} phase={state.phase} onBack={handleBack}>
+    <TimerLayout title={t('mode.custom')} subtitle={subtitle} phase={state.phase} onBack={handleBack}>
       {state.phase === 'idle' ? (
         <div className="flex-1 min-h-0 w-full overflow-y-auto">
           <div className="w-full flex flex-col gap-4 py-2">
@@ -217,7 +214,7 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
               <BlockCard key={block.id} block={block} index={i} total={blocks.length}
                 onChange={(b) => updateBlock(block.id, b)} onRemove={() => removeBlock(block.id)}
                 onMoveUp={() => moveBlock(i, -1)} onMoveDown={() => moveBlock(i, 1)}
-                isFirst={i === 0} isLast={i === blocks.length - 1} />
+                isFirst={i === 0} isLast={i === blocks.length - 1} t={t} />
             ))}
             <button onClick={addBlock}
               className="
@@ -227,7 +224,7 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
                 hover:border-white/[0.2] hover:text-gray-300 hover:bg-white/[0.02]
                 active:scale-[0.98] transition-all
               ">
-              + Add block
+              {t('btn.addBlock')}
             </button>
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
           </div>
@@ -238,7 +235,7 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
             time={state.timeLeft} phase={state.phase}
             currentRound={state.currentRound} totalRounds={state.totalRounds}
             onClick={state.phase !== 'done' ? pause : undefined}
-            blockLabel={currentBlock ? blockLabel(currentBlock.type) : undefined}
+            blockLabel={currentBlock ? t(blockLabelKeys[currentBlock.type]) : undefined}
             blockIndex={activeBlockIndex}
             blockTotal={blocks.length}
           />

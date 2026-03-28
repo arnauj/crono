@@ -5,10 +5,12 @@ import { Controls } from './Controls';
 import { NumberInput } from './NumberInput';
 import { useTimer, buildTabataSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
+import { useT } from '../hooks/useI18n';
 
 interface TabataModeProps { onBack: () => void; }
 
 export function TabataMode({ onBack }: TabataModeProps) {
+  const t = useT();
   const [rounds, setRounds] = useState(() => loadSetting('tabata-rounds', 8));
   const [workSec, setWorkSec] = useState(() => loadSetting('tabata-work', 20));
   const [restSec, setRestSec] = useState(() => loadSetting('tabata-rest', 10));
@@ -25,18 +27,18 @@ export function TabataMode({ onBack }: TabataModeProps) {
   const handleBack = () => { reset(); onBack(); };
 
   const subtitle = state.phase === 'work' || state.phase === 'rest'
-    ? `Round ${state.currentRound} / ${state.totalRounds}`
+    ? t('sub.roundOf', { current: state.currentRound, total: state.totalRounds })
     : state.phase === 'done'
-    ? `${state.totalRounds} rounds completed` : undefined;
+    ? t('sub.roundsCompleted', { total: state.totalRounds }) : undefined;
 
   return (
-    <TimerLayout title="Tabata" subtitle={subtitle} phase={state.phase} onBack={handleBack}>
+    <TimerLayout title={t('mode.tabata')} subtitle={subtitle} phase={state.phase} onBack={handleBack}>
       {state.phase === 'idle' ? (
         <div className="flex-1 flex items-center justify-center w-full">
           <div className="w-full flex flex-col gap-5">
-            <NumberInput label="Rounds" value={rounds} onChange={setRounds} min={1} suffix="rounds" />
-            <NumberInput label="Work" value={workSec} onChange={setWorkSec} min={1} suffix="seconds" />
-            <NumberInput label="Rest" value={restSec} onChange={setRestSec} min={0} suffix="seconds" />
+            <NumberInput label={t('label.rounds')} value={rounds} onChange={setRounds} min={1} suffix={t('suffix.rounds')} />
+            <NumberInput label={t('label.work')} value={workSec} onChange={setWorkSec} min={1} suffix={t('suffix.seconds')} />
+            <NumberInput label={t('label.rest')} value={restSec} onChange={setRestSec} min={0} suffix={t('suffix.seconds')} />
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
           </div>
         </div>

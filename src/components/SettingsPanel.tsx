@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { loadSetting, saveSetting } from '../utils/storage';
+import { useT } from '../hooks/useI18n';
+import { LANGUAGES, getLang, setLang, type Lang } from '../utils/i18n';
 
 interface SettingsPanelProps {
   open: boolean;
@@ -7,8 +9,10 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
+  const t = useT();
   const [countdown, setCountdown] = useState(() => loadSetting('countdown-seconds', 10));
   const [soundOn, setSoundOn] = useState(() => loadSetting('sound-enabled', true));
+  const [lang, setLangState] = useState<Lang>(getLang);
 
   if (!open) return null;
 
@@ -24,6 +28,11 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     saveSetting('sound-enabled', next);
   };
 
+  const changeLang = (newLang: Lang) => {
+    setLangState(newLang);
+    setLang(newLang);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -33,10 +42,9 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/[0.06]">
-          <h3 className="text-white text-lg font-bold tracking-tight">Settings</h3>
+          <h3 className="text-white text-lg font-bold tracking-tight">{t('settings.title')}</h3>
           <button
             onClick={onClose}
-            aria-label="Close settings"
             className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:text-white hover:bg-white/[0.08] active:scale-90 transition-all"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -46,11 +54,38 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
         {/* Settings */}
         <div className="px-6 py-5 flex flex-col gap-5">
 
+          {/* Language */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-white text-base font-semibold">{t('settings.language')}</p>
+                <p className="text-gray-500 text-sm">{t('settings.languageDesc')}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.id}
+                  onClick={() => changeLang(l.id)}
+                  className={`
+                    py-2.5 rounded-xl text-sm font-semibold transition-all
+                    ${lang === l.id
+                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                      : 'bg-white/[0.04] text-gray-400 border border-transparent hover:bg-white/[0.08] hover:text-white'
+                    }
+                  `}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Countdown */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white text-base font-semibold">Countdown</p>
-              <p className="text-gray-500 text-sm">Before each start</p>
+              <p className="text-white text-base font-semibold">{t('settings.countdown')}</p>
+              <p className="text-gray-500 text-sm">{t('settings.countdownDesc')}</p>
             </div>
             <div className="flex items-center gap-2.5">
               <button
@@ -70,8 +105,8 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
           {/* Sound */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white text-base font-semibold">Sound</p>
-              <p className="text-gray-500 text-sm">Beeps and alerts</p>
+              <p className="text-white text-base font-semibold">{t('settings.sound')}</p>
+              <p className="text-gray-500 text-sm">{t('settings.soundDesc')}</p>
             </div>
             <button
               onClick={toggleSound}
@@ -79,7 +114,6 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 relative w-14 h-8 rounded-full transition-colors duration-200
                 ${soundOn ? 'bg-cyan-500' : 'bg-white/[0.1]'}
               `}
-              aria-label={soundOn ? 'Disable sound' : 'Enable sound'}
             >
               <span className={`
                 absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform duration-200

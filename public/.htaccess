@@ -1,6 +1,19 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # Strip /crono/ prefix so local Apache serves the right files
+  RewriteCond %{REQUEST_URI} ^/crono/(.+)$
+  RewriteCond %{DOCUMENT_ROOT}/%1 -f
+  RewriteRule ^crono/(.+)$ /$1 [L]
+
+  # /crono/ or /crono → index.html
+  RewriteRule ^crono/?$ /index.html [L]
+
+  # /crono/<mode> → index.html (SPA routes)
+  RewriteRule ^crono/.+$ /index.html [L]
+
+  # SPA fallback for non-prefixed routes
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d

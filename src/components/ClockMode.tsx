@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { TimerLayout } from './TimerLayout';
 import { formatTimeHMS } from '../utils/format';
+import { useT } from '../hooks/useI18n';
 
 interface ClockModeProps {
   onBack: () => void;
 }
 
 export function ClockMode({ onBack }: ClockModeProps) {
+  const t = useT();
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -15,13 +17,13 @@ export function ClockMode({ onBack }: ClockModeProps) {
   }, []);
 
   return (
-    <TimerLayout title="Clock" phase="idle" onBack={onBack}>
+    <TimerLayout title={t('mode.clock')} phase="idle" onBack={onBack}>
       <div className="flex-1 flex items-center justify-center">
         <time
           className="timer-digits timer-glow text-white"
           style={{ fontSize: 'clamp(4rem, 20vw, 16rem)', lineHeight: 0.9 }}
           aria-live="polite"
-          aria-label={`Current time: ${formatTimeHMS(time)}`}
+          aria-label={`${t('clock.currentTime')}: ${formatTimeHMS(time)}`}
         >
           {formatTimeHMS(time)}
         </time>

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { TimerPhase } from '../types/timer';
+import { useT } from '../hooks/useI18n';
 
 interface TimerLayoutProps {
   title: string;
@@ -10,6 +11,8 @@ interface TimerLayoutProps {
 }
 
 export function TimerLayout({ title, subtitle, phase, onBack, children }: TimerLayoutProps) {
+  const t = useT();
+
   const bg = phase === 'rest'
     ? 'bg-[#0b3d2a]'
     : phase === 'countdown'
@@ -23,7 +26,7 @@ export function TimerLayout({ title, subtitle, phase, onBack, children }: TimerL
       <header className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-6 pt-6 pb-4 md:px-10 md:pt-8 md:pb-5">
         <button
           onClick={onBack}
-          aria-label="Back to menu"
+          aria-label={t('btn.back')}
           className="
             flex items-center justify-center gap-2.5 h-12 min-w-[7.5rem] px-6 rounded-2xl
             bg-white/[0.06] border border-white/[0.08]
@@ -34,12 +37,12 @@ export function TimerLayout({ title, subtitle, phase, onBack, children }: TimerL
           "
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          Back
+          {t('btn.back')}
         </button>
 
-        <div className="text-center min-w-0 px-4">
-          <h2 className="text-white text-2xl md:text-3xl font-bold tracking-tight truncate">{title}</h2>
-          {subtitle && <p className="text-gray-400 text-xs md:text-sm truncate mt-0.5">{subtitle}</p>}
+        <div className="text-center px-4">
+          <h2 className="text-white text-2xl md:text-3xl font-bold tracking-tight">{title}</h2>
+          {subtitle && <p className="text-gray-400 text-xs md:text-sm mt-0.5">{subtitle}</p>}
         </div>
 
         {/* Spacer to balance the layout */}

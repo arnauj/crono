@@ -1,3 +1,5 @@
+import { useT } from '../hooks/useI18n';
+
 interface ControlsProps {
   isRunning: boolean;
   isStarted: boolean;
@@ -15,6 +17,8 @@ const base = `
 `;
 
 export function Controls({ isRunning, isStarted, isDone, onStart, onPause, onReset }: ControlsProps) {
+  const t = useT();
+
   if (!isStarted || isDone) {
     return (
       <div className="shrink-0 w-full mt-12 md:mt-14">
@@ -29,7 +33,7 @@ export function Controls({ isRunning, isStarted, isDone, onStart, onPause, onRes
             shadow-green-500/25
           `}
         >
-          {isDone ? 'Restart' : 'Start'}
+          {isDone ? t('btn.restart') : t('btn.start')}
         </button>
       </div>
     );
@@ -45,7 +49,7 @@ export function Controls({ isRunning, isStarted, isDone, onStart, onPause, onRes
             : 'bg-gradient-to-b from-green-400 to-green-500 text-black hover:from-green-300 hover:to-green-400 focus-visible:ring-green-400 shadow-green-500/20'
         }`}
       >
-        {isRunning ? 'Pause' : 'Resume'}
+        {isRunning ? t('btn.pause') : t('btn.resume')}
       </button>
       <button
         onClick={onReset}
@@ -58,7 +62,7 @@ export function Controls({ isRunning, isStarted, isDone, onStart, onPause, onRes
           shadow-none
         `}
       >
-        Reset
+        {t('btn.reset')}
       </button>
     </div>
   );

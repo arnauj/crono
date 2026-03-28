@@ -5,10 +5,12 @@ import { Controls } from './Controls';
 import { NumberInput } from './NumberInput';
 import { useTimer, buildForTimeSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
+import { useT } from '../hooks/useI18n';
 
 interface ForTimeModeProps { onBack: () => void; }
 
 export function ForTimeMode({ onBack }: ForTimeModeProps) {
+  const t = useT();
   const [minutes, setMinutes] = useState(() => loadSetting('fortime-minutes', 5));
 
   const segments = useMemo(() => buildForTimeSegments(minutes), [minutes]);
@@ -17,14 +19,14 @@ export function ForTimeMode({ onBack }: ForTimeModeProps) {
   const handleStart = () => { saveSetting('fortime-minutes', minutes); start(); };
   const handleBack = () => { reset(); onBack(); };
 
-  const subtitle = state.phase === 'done' ? `${minutes} min completed` : undefined;
+  const subtitle = state.phase === 'done' ? t('sub.minCompleted', { min: minutes }) : undefined;
 
   return (
-    <TimerLayout title="For Time" subtitle={subtitle} phase={state.phase} onBack={handleBack}>
+    <TimerLayout title={t('mode.fortime')} subtitle={subtitle} phase={state.phase} onBack={handleBack}>
       {state.phase === 'idle' ? (
         <div className="flex-1 flex items-center justify-center w-full">
           <div className="w-full flex flex-col gap-5">
-            <NumberInput label="Time Cap" value={minutes} onChange={setMinutes} min={1} suffix="minutes" />
+            <NumberInput label={t('label.timeCap')} value={minutes} onChange={setMinutes} min={1} suffix={t('suffix.minutes')} />
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
           </div>
         </div>

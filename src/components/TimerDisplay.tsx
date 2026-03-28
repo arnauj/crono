@@ -1,5 +1,6 @@
 import type { TimerPhase } from '../types/timer';
 import { formatTime } from '../utils/format';
+import { useT } from '../hooks/useI18n';
 
 interface TimerDisplayProps {
   time: number;
@@ -13,31 +14,35 @@ interface TimerDisplayProps {
 }
 
 export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, blockLabel, blockIndex, blockTotal }: TimerDisplayProps) {
+  const t = useT();
   const showBlockInfo = blockLabel != null && blockTotal != null && blockTotal > 0;
+
+  const blockInfoEl = showBlockInfo && (
+    <p className="mb-4 font-bold tracking-wide" style={{ fontSize: 'clamp(1.2rem, 4vw, 2.2rem)' }}>
+      <span className="text-cyan-400 font-extrabold">{blockLabel}</span>
+      <span className="text-gray-500 mx-2">—</span>
+      <span className="text-gray-400">{t('timer.block')} </span>
+      <span className="text-white font-extrabold">{(blockIndex ?? 0) + 1}</span>
+      <span className="text-gray-500"> / {blockTotal}</span>
+    </p>
+  );
+
   return (
     <div
       className="flex-1 flex flex-col items-center justify-center select-none"
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      aria-label={onClick ? 'Toggle pause' : undefined}
+      aria-label={onClick ? t('btn.pause') : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       style={onClick ? { cursor: 'pointer' } : undefined}
     >
       {/* Countdown */}
       {phase === 'countdown' && (
         <div className="flex flex-col items-center">
-          {showBlockInfo && (
-            <p className="mb-4 font-bold tracking-wide" style={{ fontSize: 'clamp(1.2rem, 4vw, 2.2rem)' }}>
-              <span className="text-cyan-400 font-extrabold">{blockLabel}</span>
-              <span className="text-gray-500 mx-2">—</span>
-              <span className="text-gray-400">Block </span>
-              <span className="text-white font-extrabold">{(blockIndex ?? 0) + 1}</span>
-              <span className="text-gray-500"> / {blockTotal}</span>
-            </p>
-          )}
+          {blockInfoEl}
           <p className="text-gray-500 uppercase tracking-[0.35em] font-semibold mb-6" style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)' }}>
-            Get ready
+            {t('timer.getReady')}
           </p>
           <span
             key={time}
@@ -52,27 +57,19 @@ export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, 
       {/* Work / Rest */}
       {(phase === 'work' || phase === 'rest') && (
         <div className="flex flex-col items-center">
-          {showBlockInfo && (
-            <p className="mb-4 font-bold tracking-wide" style={{ fontSize: 'clamp(1.2rem, 4vw, 2.2rem)' }}>
-              <span className="text-cyan-400 font-extrabold">{blockLabel}</span>
-              <span className="text-gray-500 mx-2">—</span>
-              <span className="text-gray-400">Block </span>
-              <span className="text-white font-extrabold">{(blockIndex ?? 0) + 1}</span>
-              <span className="text-gray-500"> / {blockTotal}</span>
-            </p>
-          )}
+          {blockInfoEl}
           <span className={`
             inline-block px-10 py-3 rounded-full font-extrabold uppercase tracking-[0.3em]
             ${phase === 'rest' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/15 text-red-400'}
           `}
             style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)' }}
           >
-            {phase === 'work' ? 'Work' : 'Rest'}
+            {phase === 'work' ? t('timer.work') : t('timer.rest')}
           </span>
 
           {totalRounds != null && totalRounds > 1 && (
             <p className="mt-5 font-bold tracking-wide" style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)' }}>
-              <span className="text-gray-400">Round </span>
+              <span className="text-gray-400">{t('timer.round')} </span>
               <span className="text-white font-extrabold" style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)' }}>{currentRound}</span>
               <span className="text-gray-500"> / {totalRounds}</span>
             </p>
@@ -91,7 +88,7 @@ export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, 
       {phase === 'done' && (
         <div className="flex flex-col items-center">
           <span className="inline-block px-10 py-3 rounded-full font-extrabold uppercase tracking-[0.3em] bg-green-500/20 text-green-400 mb-6" style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)' }}>
-            Complete
+            {t('timer.complete')}
           </span>
           <time
             className="timer-digits text-gray-500"
