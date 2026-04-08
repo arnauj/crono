@@ -222,3 +222,9 @@ export function buildEmomSegments(intervalMin: number, intervalSec: number, roun
 export function buildAmrapSegments(minutes: number): TimerSegment[] {
   return [{ phase: 'work', duration: minutes * 60, round: 1, totalRounds: 1 }];
 }
+
+export function buildRestSegments(minutes: number, seconds: number): TimerSegment[] {
+  const duration = minutes * 60 + seconds;
+  if (duration <= 0) return [];
+  return [{ phase: 'rest', duration, round: 1, totalRounds: 1 }];
+}

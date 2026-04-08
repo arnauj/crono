@@ -33,11 +33,16 @@ export interface AmrapConfig {
   minutes: number;
 }
 
-export type BlockType = 'emom' | 'fortime' | 'tabata' | 'amrap';
+export interface RestConfig {
+  minutes: number;
+  seconds: number;
+}
+
+export type BlockType = 'emom' | 'fortime' | 'tabata' | 'amrap' | 'rest';
 
 export interface TrainingBlock {
   id: string;
   type: BlockType;
   name: string;
-  config: TabataConfig | ForTimeConfig | EmomConfig | AmrapConfig;
+  config: TabataConfig | ForTimeConfig | EmomConfig | AmrapConfig | RestConfig;
 }
