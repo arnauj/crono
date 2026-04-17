@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TimerState } from '../types/timer';
-import { playCountdownBeep, playFinishBeep, playShortBeep } from '../utils/sounds';
+import {
+  cancelScheduledBeeps,
+  playCountdownBeep,
+  playFinishBeep,
+  playShortBeep,
+  scheduleCountdownCues,
+} from '../utils/sounds';
 import { loadSetting } from '../utils/storage';
 
 interface TimerSegment {
@@ -68,7 +74,8 @@ export function useTimer({ segments, countdownSeconds, countUp = false, onComple
     // — Countdown phase —
     if (cur.phase === 'countdown') {
       timeLeftRef.current -= 1;
-      if (timeLeftRef.current <= 3 && timeLeftRef.current > 0) playCountdownBeep();
+      // 3-2-1 cues are pre-scheduled via the Web Audio clock in start(), so
+      // they fire on time even when iOS throttles the JS tick near sleep.
       if (timeLeftRef.current <= 0) {
         // transition to first segment
         segmentIndexRef.current = 0;
@@ -146,6 +153,7 @@ export function useTimer({ segments, countdownSeconds, countUp = false, onComple
 
   const start = useCallback(() => {
     clearTimer();
+    cancelScheduledBeeps();
     segmentIndexRef.current = 0;
     elapsedRef.current = 0;
 
@@ -154,6 +162,10 @@ export function useTimer({ segments, countdownSeconds, countUp = false, onComple
 
     const segs = segmentsRef.current;
     const totalRounds = segs.length > 0 ? segs[segs.length - 1].totalRounds : 0;
+
+    // Schedule the final 3-2-1 beeps ahead of time using the audio clock,
+    // so iOS can't drop them if it throttles the JS tick.
+    scheduleCountdownCues(cd);
 
     update({
       phase: 'countdown',
@@ -172,8 +184,11 @@ export function useTimer({ segments, countdownSeconds, countUp = false, onComple
     const cur = stateRef.current;
     if (cur.isRunning) {
       clearTimer();
+      if (cur.phase === 'countdown') cancelScheduledBeeps();
       update({ ...cur, isRunning: false });
     } else if (cur.phase !== 'idle' && cur.phase !== 'done') {
+      // Resuming from a paused countdown: reschedule the remaining 3-2-1 cues.
+      if (cur.phase === 'countdown') scheduleCountdownCues(timeLeftRef.current);
       update({ ...cur, isRunning: true });
       startInterval();
     }
@@ -181,6 +196,7 @@ export function useTimer({ segments, countdownSeconds, countUp = false, onComple
 
   const reset = useCallback(() => {
     clearTimer();
+    cancelScheduledBeeps();
     segmentIndexRef.current = 0;
     elapsedRef.current = 0;
     timeLeftRef.current = 0;

@@ -65,16 +65,37 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mode]);
 
-  // Prevent screen sleep via wake lock
+  // Prevent screen sleep via wake lock. iOS releases the lock when the page is
+  // hidden (screen off, tab switch) — re-acquire on visibilitychange so long
+  // countdowns never leave the screen unattended.
   useEffect(() => {
+    if (!mode) return;
+
     let wakeLock: WakeLockSentinel | null = null;
-    if (mode && 'wakeLock' in navigator) {
-      navigator.wakeLock.request('screen').then((wl) => {
-        wakeLock = wl;
-      }).catch(() => {});
-    }
+    let cancelled = false;
+
+    const request = async () => {
+      if (cancelled) return;
+      if (!('wakeLock' in navigator)) return;
+      if (document.visibilityState !== 'visible') return;
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+      } catch {
+        // ignore — lock not available
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') request();
+    };
+
+    request();
+    document.addEventListener('visibilitychange', onVisibility);
+
     return () => {
-      wakeLock?.release();
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibility);
+      wakeLock?.release().catch(() => {});
     };
   }, [mode]);
 

@@ -31,46 +31,53 @@ function isSoundEnabled(): boolean {
   }
 }
 
+// Oscillators scheduled for future playback — kept so we can silence them if
+// the user pauses/resets before they fire.
+const scheduledGains: GainNode[] = [];
+const scheduledOscs: OscillatorNode[] = [];
+
+function scheduleBeepAt(startTime: number, frequency: number, duration: number): void {
+  const ctx = getAudioContext();
+
+  const compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.value = -20;
+  compressor.knee.value = 10;
+  compressor.ratio.value = 12;
+  compressor.attack.value = 0;
+  compressor.release.value = 0.1;
+  compressor.connect(ctx.destination);
+
+  const makeOsc = (freq: number, peak: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(compressor);
+    osc.frequency.value = freq;
+    osc.type = 'square';
+    gain.gain.setValueAtTime(peak, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.01);
+    scheduledGains.push(gain);
+    scheduledOscs.push(osc);
+    osc.onended = () => {
+      const gi = scheduledGains.indexOf(gain);
+      if (gi !== -1) scheduledGains.splice(gi, 1);
+      const oi = scheduledOscs.indexOf(osc);
+      if (oi !== -1) scheduledOscs.splice(oi, 1);
+    };
+  };
+
+  makeOsc(frequency, 1.0);
+  makeOsc(frequency * 2, 0.5);
+}
+
 export function playBeep(frequency: number = 800, duration: number = 0.15, count: number = 1): void {
   try {
     if (!isSoundEnabled()) return;
     const ctx = getAudioContext();
-
-    // Dynamic compressor to maximize perceived loudness
-    const compressor = ctx.createDynamicsCompressor();
-    compressor.threshold.value = -20;
-    compressor.knee.value = 10;
-    compressor.ratio.value = 12;
-    compressor.attack.value = 0;
-    compressor.release.value = 0.1;
-    compressor.connect(ctx.destination);
-
     for (let i = 0; i < count; i++) {
-      const startTime = ctx.currentTime + i * (duration + 0.08);
-
-      // Primary oscillator — square wave is much more audible
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.connect(gain1);
-      gain1.connect(compressor);
-      osc1.frequency.value = frequency;
-      osc1.type = 'square';
-      gain1.gain.setValueAtTime(1.0, startTime);
-      gain1.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      osc1.start(startTime);
-      osc1.stop(startTime + duration + 0.01);
-
-      // Secondary oscillator one octave up for extra bite
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.connect(gain2);
-      gain2.connect(compressor);
-      osc2.frequency.value = frequency * 2;
-      osc2.type = 'square';
-      gain2.gain.setValueAtTime(0.5, startTime);
-      gain2.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      osc2.start(startTime);
-      osc2.stop(startTime + duration + 0.01);
+      scheduleBeepAt(ctx.currentTime + i * (duration + 0.08), frequency, duration);
     }
   } catch {
     // Audio not available
@@ -91,4 +98,54 @@ export function playCountdownBeep(): void {
 
 export function playFinishBeep(): void {
   playBeep(1000, 0.4, 4);
+}
+
+/**
+ * Pre-schedule the closing "3-2-1" beeps of the lead-in countdown using the
+ * Web Audio clock, so they fire at precise times even if the JS main thread
+ * is throttled (common on iOS when the screen is about to sleep).
+ *
+ * @param countdownSeconds Total seconds of the lead-in countdown.
+ */
+export function scheduleCountdownCues(countdownSeconds: number): void {
+  try {
+    if (!isSoundEnabled()) return;
+    if (countdownSeconds <= 0) return;
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const beepCount = Math.min(3, countdownSeconds);
+    for (let i = 0; i < beepCount; i++) {
+      const offset = countdownSeconds - (beepCount - i);
+      scheduleBeepAt(now + offset, 1100, 0.2);
+    }
+  } catch {
+    // Audio not available
+  }
+}
+
+/**
+ * Silence and drop any beeps we had scheduled in the future (e.g. when the
+ * user pauses or resets the timer mid-countdown).
+ */
+export function cancelScheduledBeeps(): void {
+  const ctx = audioCtx;
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  scheduledGains.forEach((gain) => {
+    try {
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(0, now);
+    } catch {
+      // ignore
+    }
+  });
+  scheduledOscs.forEach((osc) => {
+    try {
+      osc.stop(now);
+    } catch {
+      // already stopped
+    }
+  });
+  scheduledGains.length = 0;
+  scheduledOscs.length = 0;
 }
