@@ -19,22 +19,20 @@ export interface TabataConfig {
 }
 
 export interface ForTimeConfig {
-  minutes: number;
+  seconds: number;
 }
 
 export interface EmomConfig {
-  intervalMinutes: number;
   intervalSeconds: number;
   rounds: number;
   restSeconds: number;
 }
 
 export interface AmrapConfig {
-  minutes: number;
+  seconds: number;
 }
 
 export interface RestConfig {
-  minutes: number;
   seconds: number;
 }
 
