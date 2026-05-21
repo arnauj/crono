@@ -39,37 +39,26 @@ const scheduledOscs: OscillatorNode[] = [];
 function scheduleBeepAt(startTime: number, frequency: number, duration: number): void {
   const ctx = getAudioContext();
 
-  const compressor = ctx.createDynamicsCompressor();
-  compressor.threshold.value = -20;
-  compressor.knee.value = 10;
-  compressor.ratio.value = 12;
-  compressor.attack.value = 0;
-  compressor.release.value = 0.1;
-  compressor.connect(ctx.destination);
-
-  const makeOsc = (freq: number, peak: number) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(compressor);
-    osc.frequency.value = freq;
-    osc.type = 'square';
-    gain.gain.setValueAtTime(peak, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-    osc.start(startTime);
-    osc.stop(startTime + duration + 0.01);
-    scheduledGains.push(gain);
-    scheduledOscs.push(osc);
-    osc.onended = () => {
-      const gi = scheduledGains.indexOf(gain);
-      if (gi !== -1) scheduledGains.splice(gi, 1);
-      const oi = scheduledOscs.indexOf(osc);
-      if (oi !== -1) scheduledOscs.splice(oi, 1);
-    };
+  // Original sine timbre, at full-scale volume (the loudest a clean tone can be
+  // without clipping at the audio destination).
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = frequency;
+  osc.type = 'sine';
+  gain.gain.setValueAtTime(1.0, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.01);
+  scheduledGains.push(gain);
+  scheduledOscs.push(osc);
+  osc.onended = () => {
+    const gi = scheduledGains.indexOf(gain);
+    if (gi !== -1) scheduledGains.splice(gi, 1);
+    const oi = scheduledOscs.indexOf(osc);
+    if (oi !== -1) scheduledOscs.splice(oi, 1);
   };
-
-  makeOsc(frequency, 1.0);
-  makeOsc(frequency * 2, 0.5);
 }
 
 export function playBeep(frequency: number = 800, duration: number = 0.15, count: number = 1): void {

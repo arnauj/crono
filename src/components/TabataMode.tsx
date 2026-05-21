@@ -3,6 +3,7 @@ import { TimerLayout } from './TimerLayout';
 import { TimerDisplay } from './TimerDisplay';
 import { Controls } from './Controls';
 import { NumberInput } from './NumberInput';
+import { DurationInput } from './DurationInput';
 import { useTimer, buildTabataSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
@@ -37,8 +38,8 @@ export function TabataMode({ onBack }: TabataModeProps) {
         <div className="flex-1 flex items-center justify-center w-full">
           <div className="w-full flex flex-col gap-5">
             <NumberInput label={t('label.rounds')} value={rounds} onChange={setRounds} min={1} suffix={t('suffix.rounds')} />
-            <NumberInput label={t('label.work')} value={workSec} onChange={setWorkSec} min={1} suffix={t('suffix.seconds')} />
-            <NumberInput label={t('label.rest')} value={restSec} onChange={setRestSec} min={0} suffix={t('suffix.seconds')} />
+            <DurationInput label={t('label.work')} seconds={workSec} onChange={setWorkSec} min={1} />
+            <DurationInput label={t('label.rest')} seconds={restSec} onChange={setRestSec} min={0} />
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
           </div>
         </div>

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { TimerLayout } from './TimerLayout';
 import { TimerDisplay } from './TimerDisplay';
 import { Controls } from './Controls';
-import { NumberInput } from './NumberInput';
+import { DurationInput } from './DurationInput';
 import { useTimer, buildForTimeSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
@@ -11,22 +11,22 @@ interface ForTimeModeProps { onBack: () => void; }
 
 export function ForTimeMode({ onBack }: ForTimeModeProps) {
   const t = useT();
-  const [minutes, setMinutes] = useState(() => loadSetting('fortime-minutes', 5));
+  const [seconds, setSeconds] = useState(() => loadSetting('fortime-seconds', loadSetting('fortime-minutes', 5) * 60));
 
-  const segments = useMemo(() => buildForTimeSegments(minutes), [minutes]);
+  const segments = useMemo(() => buildForTimeSegments(seconds), [seconds]);
   const { state, start, pause, reset } = useTimer({ segments, countUp: true });
 
-  const handleStart = () => { saveSetting('fortime-minutes', minutes); start(); };
+  const handleStart = () => { saveSetting('fortime-seconds', seconds); start(); };
   const handleBack = () => { reset(); onBack(); };
 
-  const subtitle = state.phase === 'done' ? t('sub.minCompleted', { min: minutes }) : undefined;
+  const subtitle = state.phase === 'done' ? t('sub.minCompleted', { min: Math.round(seconds / 60) }) : undefined;
 
   return (
     <TimerLayout title={t('mode.fortime')} subtitle={subtitle} phase={state.phase} onBack={handleBack}>
       {state.phase === 'idle' ? (
         <div className="flex-1 flex items-center justify-center w-full">
           <div className="w-full flex flex-col gap-5">
-            <NumberInput label={t('label.timeCap')} value={minutes} onChange={setMinutes} min={1} suffix={t('suffix.minutes')} />
+            <DurationInput label={t('label.timeCap')} seconds={seconds} onChange={setSeconds} min={1} />
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
           </div>
         </div>

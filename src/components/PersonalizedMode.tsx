@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { TimerLayout } from './TimerLayout';
 import { TimerDisplay } from './TimerDisplay';
 import { Controls } from './Controls';
+import { DurationInput } from './DurationInput';
 import type { BlockType, TrainingBlock, TabataConfig, ForTimeConfig, EmomConfig, AmrapConfig, RestConfig } from '../types/timer';
 import { useTimer, buildTabataSegments, buildForTimeSegments, buildEmomSegments, buildAmrapSegments, buildRestSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
@@ -17,10 +18,33 @@ function nextId() { return `block-${++blockIdCounter}-${Date.now()}`; }
 function defaultConfig(type: BlockType): TrainingBlock['config'] {
   switch (type) {
     case 'tabata': return { rounds: 8, workSeconds: 20, restSeconds: 10 };
-    case 'fortime': return { minutes: 5 };
-    case 'emom': return { intervalMinutes: 1, intervalSeconds: 0, rounds: 10, restSeconds: 0 };
-    case 'amrap': return { minutes: 5 };
-    case 'rest': return { minutes: 1, seconds: 0 };
+    case 'fortime': return { seconds: 300 };
+    case 'emom': return { intervalSeconds: 60, rounds: 10, restSeconds: 0 };
+    case 'amrap': return { seconds: 300 };
+    case 'rest': return { seconds: 60 };
+  }
+}
+
+/* Normalize blocks loaded from storage that may use the old minutes+seconds shape. */
+function normalizeBlock(block: TrainingBlock): TrainingBlock {
+  const c = block.config as unknown as Record<string, number | undefined>;
+  switch (block.type) {
+    case 'tabata':
+      return { ...block, config: { rounds: c.rounds ?? 8, workSeconds: c.workSeconds ?? 20, restSeconds: c.restSeconds ?? 10 } };
+    case 'fortime':
+      return { ...block, config: { seconds: c.seconds ?? (c.minutes != null ? c.minutes * 60 : 300) } };
+    case 'amrap':
+      return { ...block, config: { seconds: c.seconds ?? (c.minutes != null ? c.minutes * 60 : 300) } };
+    case 'emom': {
+      const interval = c.intervalMinutes != null
+        ? c.intervalMinutes * 60 + (c.intervalSeconds ?? 0)
+        : (c.intervalSeconds ?? 60);
+      return { ...block, config: { intervalSeconds: interval, rounds: c.rounds ?? 10, restSeconds: c.restSeconds ?? 0 } };
+    }
+    case 'rest': {
+      const seconds = c.minutes != null ? c.minutes * 60 + (c.seconds ?? 0) : (c.seconds ?? 60);
+      return { ...block, config: { seconds } };
+    }
   }
 }
 
@@ -35,10 +59,10 @@ const blockLabelKeys: Record<BlockType, string> = {
 function buildBlockSegments(block: TrainingBlock) {
   switch (block.type) {
     case 'tabata': { const c = block.config as TabataConfig; return buildTabataSegments(c.rounds, c.workSeconds, c.restSeconds); }
-    case 'fortime': { const c = block.config as ForTimeConfig; return buildForTimeSegments(c.minutes); }
-    case 'emom': { const c = block.config as EmomConfig; return buildEmomSegments(c.intervalMinutes, c.intervalSeconds, c.rounds, c.restSeconds); }
-    case 'amrap': { const c = block.config as AmrapConfig; return buildAmrapSegments(c.minutes); }
-    case 'rest': { const c = block.config as RestConfig; return buildRestSegments(c.minutes, c.seconds); }
+    case 'fortime': { const c = block.config as ForTimeConfig; return buildForTimeSegments(c.seconds); }
+    case 'emom': { const c = block.config as EmomConfig; return buildEmomSegments(c.intervalSeconds, c.rounds, c.restSeconds); }
+    case 'amrap': { const c = block.config as AmrapConfig; return buildAmrapSegments(c.seconds); }
+    case 'rest': { const c = block.config as RestConfig; return buildRestSegments(c.seconds); }
   }
 }
 
@@ -81,6 +105,14 @@ function ConfigRow({ label, value, onChange, min = 0, suffix }: {
   );
 }
 
+/* Human-readable duration: whole minutes as "N min", sub-minute as "N sec", else m:ss. */
+function durationLabel(seconds: number, t: typeof tRaw): string {
+  if (seconds <= 0) return `0 ${t('suffix.sec')}`;
+  if (seconds % 60 === 0) return `${seconds / 60} ${t('suffix.min')}`;
+  if (seconds < 60) return `${seconds} ${t('suffix.sec')}`;
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
 /* ── Compact summary for collapsed blocks ── */
 function blockSummary(block: TrainingBlock, t: typeof tRaw): string {
   switch (block.type) {
@@ -90,34 +122,56 @@ function blockSummary(block: TrainingBlock, t: typeof tRaw): string {
     }
     case 'fortime': {
       const c = block.config as ForTimeConfig;
-      return `${c.minutes} ${t('suffix.min')}`;
+      return durationLabel(c.seconds, t);
     }
     case 'emom': {
       const c = block.config as EmomConfig;
-      const interval = c.intervalSeconds > 0 ? `${c.intervalMinutes}:${String(c.intervalSeconds).padStart(2, '0')}` : `${c.intervalMinutes} ${t('suffix.min')}`;
-      const rest = c.restSeconds > 0 ? ` + ${c.restSeconds}${t('suffix.sec')} rest` : '';
-      return `${c.rounds}r × ${interval}${rest}`;
+      const rest = c.restSeconds > 0 ? ` + ${durationLabel(c.restSeconds, t)} rest` : '';
+      return `${c.rounds}r × ${durationLabel(c.intervalSeconds, t)}${rest}`;
     }
     case 'amrap': {
       const c = block.config as AmrapConfig;
-      return `${c.minutes} ${t('suffix.min')}`;
+      return durationLabel(c.seconds, t);
     }
     case 'rest': {
       const c = block.config as RestConfig;
-      const parts: string[] = [];
-      if (c.minutes > 0) parts.push(`${c.minutes} ${t('suffix.min')}`);
-      if (c.seconds > 0) parts.push(`${c.seconds} ${t('suffix.sec')}`);
-      return parts.join(' ') || `0 ${t('suffix.sec')}`;
+      return durationLabel(c.seconds, t);
     }
   }
 }
 
+type DragHandleProps = {
+  onPointerDown: (e: ReactPointerEvent) => void;
+  onPointerMove: (e: ReactPointerEvent) => void;
+  onPointerUp: (e: ReactPointerEvent) => void;
+  onPointerCancel: (e: ReactPointerEvent) => void;
+};
+
+/* ── Drag handle (grip) ── */
+function DragHandle({ handlers }: { handlers: DragHandleProps }) {
+  return (
+    <button
+      type="button"
+      aria-label="Drag to reorder"
+      onClick={(e) => e.stopPropagation()}
+      {...handlers}
+      className="shrink-0 -ml-1 w-7 h-9 flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.06] active:text-white transition-colors touch-none cursor-grab active:cursor-grabbing"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" />
+        <circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" />
+        <circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" />
+      </svg>
+    </button>
+  );
+}
+
 /* ── Block card ── */
-function BlockCard({ block, index, total, expanded, onToggle, onChange, onRemove, onMoveUp, onMoveDown, isFirst, isLast, t }: {
+function BlockCard({ block, index, total, expanded, onToggle, onChange, onRemove, onMoveUp, onMoveDown, isFirst, isLast, dragHandle, t }: {
   block: TrainingBlock; index: number; total: number;
   expanded: boolean; onToggle: () => void;
   onChange: (b: TrainingBlock) => void; onRemove: () => void; onMoveUp: () => void; onMoveDown: () => void;
-  isFirst: boolean; isLast: boolean; t: typeof tRaw;
+  isFirst: boolean; isLast: boolean; dragHandle?: DragHandleProps; t: typeof tRaw;
 }) {
   const updateConfig = (partial: Partial<TrainingBlock['config']>) =>
     onChange({ ...block, config: { ...block.config, ...partial } });
@@ -132,6 +186,7 @@ function BlockCard({ block, index, total, expanded, onToggle, onChange, onRemove
       >
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-3 min-w-0">
+            {dragHandle && <DragHandle handlers={dragHandle} />}
             <span className={`${colors.bg} ${colors.text} text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0`}>
               {index + 1}/{total}
             </span>
@@ -152,6 +207,7 @@ function BlockCard({ block, index, total, expanded, onToggle, onChange, onRemove
       {/* ── Card header ── */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 cursor-pointer" onClick={onToggle}>
         <div className="flex items-center gap-3">
+          {dragHandle && <DragHandle handlers={dragHandle} />}
           <span className={`${colors.bg} ${colors.text} text-sm font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider`}>
             {index + 1}/{total}
           </span>
@@ -204,29 +260,25 @@ function BlockCard({ block, index, total, expanded, onToggle, onChange, onRemove
         {block.type === 'tabata' && (
           <>
             <ConfigRow label={t('label.rounds')} value={(block.config as TabataConfig).rounds} onChange={(v) => updateConfig({ rounds: v })} min={1} />
-            <ConfigRow label={t('label.work')} value={(block.config as TabataConfig).workSeconds} onChange={(v) => updateConfig({ workSeconds: v })} min={1} suffix={t('suffix.sec')} />
-            <ConfigRow label={t('label.rest')} value={(block.config as TabataConfig).restSeconds} onChange={(v) => updateConfig({ restSeconds: v })} suffix={t('suffix.sec')} />
+            <DurationInput compact label={t('label.work')} seconds={(block.config as TabataConfig).workSeconds} onChange={(v) => updateConfig({ workSeconds: v })} min={1} />
+            <DurationInput compact label={t('label.rest')} seconds={(block.config as TabataConfig).restSeconds} onChange={(v) => updateConfig({ restSeconds: v })} />
           </>
         )}
         {block.type === 'fortime' && (
-          <ConfigRow label={t('label.timeCap')} value={(block.config as ForTimeConfig).minutes} onChange={(v) => updateConfig({ minutes: v })} min={1} suffix={t('suffix.min')} />
+          <DurationInput compact label={t('label.timeCap')} seconds={(block.config as ForTimeConfig).seconds} onChange={(v) => updateConfig({ seconds: v })} min={1} />
         )}
         {block.type === 'emom' && (
           <>
-            <ConfigRow label={t('label.every')} value={(block.config as EmomConfig).intervalMinutes} onChange={(v) => updateConfig({ intervalMinutes: v })} suffix={t('suffix.min')} />
-            <ConfigRow label={t('label.and')} value={(block.config as EmomConfig).intervalSeconds} onChange={(v) => updateConfig({ intervalSeconds: v })} suffix={t('suffix.sec')} />
+            <DurationInput compact label={t('label.every')} seconds={(block.config as EmomConfig).intervalSeconds} onChange={(v) => updateConfig({ intervalSeconds: v })} />
             <ConfigRow label={t('label.rounds')} value={(block.config as EmomConfig).rounds} onChange={(v) => updateConfig({ rounds: v })} min={1} />
-            <ConfigRow label={t('label.rest')} value={(block.config as EmomConfig).restSeconds} onChange={(v) => updateConfig({ restSeconds: v })} suffix={t('suffix.sec')} />
+            <DurationInput compact label={t('label.rest')} seconds={(block.config as EmomConfig).restSeconds} onChange={(v) => updateConfig({ restSeconds: v })} />
           </>
         )}
         {block.type === 'amrap' && (
-          <ConfigRow label={t('label.duration')} value={(block.config as AmrapConfig).minutes} onChange={(v) => updateConfig({ minutes: v })} min={1} suffix={t('suffix.min')} />
+          <DurationInput compact label={t('label.duration')} seconds={(block.config as AmrapConfig).seconds} onChange={(v) => updateConfig({ seconds: v })} min={1} />
         )}
         {block.type === 'rest' && (
-          <>
-            <ConfigRow label={t('label.duration')} value={(block.config as RestConfig).minutes} onChange={(v) => updateConfig({ minutes: v })} suffix={t('suffix.min')} />
-            <ConfigRow label={t('label.and')} value={(block.config as RestConfig).seconds} onChange={(v) => updateConfig({ seconds: v })} suffix={t('suffix.sec')} />
-          </>
+          <DurationInput compact label={t('label.duration')} seconds={(block.config as RestConfig).seconds} onChange={(v) => updateConfig({ seconds: v })} />
         )}
       </div>
     </div>
@@ -238,8 +290,8 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
   const t = useT();
   const [blocks, setBlocks] = useState<TrainingBlock[]>(() =>
     loadSetting<TrainingBlock[]>('personalized-blocks', [
-      { id: nextId(), type: 'emom', name: 'EMOM', config: { intervalMinutes: 1, intervalSeconds: 0, rounds: 10, restSeconds: 0 } },
-    ])
+      { id: nextId(), type: 'emom', name: 'EMOM', config: { intervalSeconds: 60, rounds: 10, restSeconds: 0 } },
+    ]).map(normalizeBlock)
   );
   const [totalRounds, setTotalRounds] = useState(() => loadSetting<number>('personalized-rounds', 1));
   const allSegments = useMemo(() => {
@@ -285,6 +337,53 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
   const updateBlock = useCallback((id: string, b: TrainingBlock) => setBlocks((p) => p.map((x) => x.id === id ? b : x)), []);
   const moveBlock = useCallback((i: number, d: -1 | 1) => setBlocks((p) => { const n = [...p]; const j = i + d; if (j < 0 || j >= n.length) return p; [n[i], n[j]] = [n[j], n[i]]; return n; }), []);
 
+  /* ── Drag-and-drop reordering ── */
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const draggingIdRef = useRef<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  const startDrag = useCallback((e: ReactPointerEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    draggingIdRef.current = id;
+    setDraggingId(id);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }, []);
+
+  const dragMove = useCallback((e: ReactPointerEvent) => {
+    const id = draggingIdRef.current;
+    if (!id) return;
+    const y = e.clientY;
+    let targetId: string | null = null;
+    for (const [bid, el] of cardRefs.current) {
+      const r = el.getBoundingClientRect();
+      if (y >= r.top && y <= r.bottom) { targetId = bid; break; }
+    }
+    if (!targetId || targetId === id) return;
+    setBlocks((prev) => {
+      const from = prev.findIndex((b) => b.id === id);
+      const to = prev.findIndex((b) => b.id === targetId);
+      if (from === -1 || to === -1 || from === to) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  }, []);
+
+  const endDrag = useCallback((e: ReactPointerEvent) => {
+    draggingIdRef.current = null;
+    setDraggingId(null);
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+  }, []);
+
+  const dragHandlersFor = useCallback((id: string): DragHandleProps => ({
+    onPointerDown: (e) => startDrag(e, id),
+    onPointerMove: dragMove,
+    onPointerUp: endDrag,
+    onPointerCancel: endDrag,
+  }), [startDrag, dragMove, endDrag]);
+
   const segIdx = state.segmentIndex ?? 0;
   const activeBlockIndex = segmentToBlock[segIdx] ?? 0;
   const currentBlock = blocks[activeBlockIndex];
@@ -301,12 +400,19 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
         <div className="flex-1 min-h-0 w-full overflow-y-auto">
           <div className="w-full flex flex-col gap-4 py-2">
             {blocks.map((block, i) => (
-              <BlockCard key={block.id} block={block} index={i} total={blocks.length}
-                expanded={expandedBlockId === block.id}
-                onToggle={() => setExpandedBlockId(expandedBlockId === block.id ? null : block.id)}
-                onChange={(b) => updateBlock(block.id, b)} onRemove={() => removeBlock(block.id)}
-                onMoveUp={() => moveBlock(i, -1)} onMoveDown={() => moveBlock(i, 1)}
-                isFirst={i === 0} isLast={i === blocks.length - 1} t={t} />
+              <div
+                key={block.id}
+                ref={(el) => { if (el) cardRefs.current.set(block.id, el); else cardRefs.current.delete(block.id); }}
+                className={`transition-[opacity,transform] ${draggingId === block.id ? 'opacity-60 scale-[0.98]' : ''}`}
+              >
+                <BlockCard block={block} index={i} total={blocks.length}
+                  expanded={expandedBlockId === block.id}
+                  onToggle={() => setExpandedBlockId(expandedBlockId === block.id ? null : block.id)}
+                  onChange={(b) => updateBlock(block.id, b)} onRemove={() => removeBlock(block.id)}
+                  onMoveUp={() => moveBlock(i, -1)} onMoveDown={() => moveBlock(i, 1)}
+                  isFirst={i === 0} isLast={i === blocks.length - 1}
+                  dragHandle={blocks.length > 1 ? dragHandlersFor(block.id) : undefined} t={t} />
+              </div>
             ))}
             <button onClick={addBlock}
               className="

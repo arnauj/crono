@@ -219,15 +219,14 @@ export function buildTabataSegments(rounds: number, workSec: number, restSec: nu
   return segments;
 }
 
-export function buildForTimeSegments(minutes: number): TimerSegment[] {
-  return [{ phase: 'work', duration: minutes * 60, round: 1, totalRounds: 1 }];
+export function buildForTimeSegments(seconds: number): TimerSegment[] {
+  return [{ phase: 'work', duration: seconds, round: 1, totalRounds: 1 }];
 }
 
-export function buildEmomSegments(intervalMin: number, intervalSec: number, rounds: number, restSec: number): TimerSegment[] {
+export function buildEmomSegments(intervalSeconds: number, rounds: number, restSec: number): TimerSegment[] {
   const segments: TimerSegment[] = [];
-  const workDuration = intervalMin * 60 + intervalSec;
   for (let i = 1; i <= rounds; i++) {
-    segments.push({ phase: 'work', duration: workDuration, round: i, totalRounds: rounds });
+    segments.push({ phase: 'work', duration: intervalSeconds, round: i, totalRounds: rounds });
     if (restSec > 0) {
       segments.push({ phase: 'rest', duration: restSec, round: i, totalRounds: rounds });
     }
@@ -235,12 +234,11 @@ export function buildEmomSegments(intervalMin: number, intervalSec: number, roun
   return segments;
 }
 
-export function buildAmrapSegments(minutes: number): TimerSegment[] {
-  return [{ phase: 'work', duration: minutes * 60, round: 1, totalRounds: 1 }];
+export function buildAmrapSegments(seconds: number): TimerSegment[] {
+  return [{ phase: 'work', duration: seconds, round: 1, totalRounds: 1 }];
 }
 
-export function buildRestSegments(minutes: number, seconds: number): TimerSegment[] {
-  const duration = minutes * 60 + seconds;
-  if (duration <= 0) return [];
-  return [{ phase: 'rest', duration, round: 1, totalRounds: 1 }];
+export function buildRestSegments(seconds: number): TimerSegment[] {
+  if (seconds <= 0) return [];
+  return [{ phase: 'rest', duration: seconds, round: 1, totalRounds: 1 }];
 }
