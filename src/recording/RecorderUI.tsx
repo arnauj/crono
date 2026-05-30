@@ -1,5 +1,5 @@
 import {
-  useCallback, useRef, useState,
+  useCallback, useEffect, useRef, useState,
   type CSSProperties, type ReactNode, type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { useRecording } from './context';
@@ -64,7 +64,7 @@ const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v,
 /* ── Floating live camera preview: draggable, resizable, fullscreen, rotatable ── */
 export function CameraPreview() {
   const t = useT();
-  const { enabled, status, error, videoRef, orientation, toggleOrientation } = useRecording();
+  const { enabled, status, error, videoRef, canvasRef, streamReady, orientation, toggleOrientation } = useRecording();
 
   const [pos, setPos] = useState(() => ({
     x: 16,
@@ -74,12 +74,27 @@ export function CameraPreview() {
   const [fullscreen, setFullscreen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, origX: 0, origY: 0 });
+  const canvasHostRef = useRef<HTMLDivElement | null>(null);
 
   const landscape = orientation === 'landscape';
   const baseW = mini ? (landscape ? 168 : 100) : (landscape ? 280 : 168);
-  const aspect = landscape ? 16 / 9 : 3 / 4; // width / height
+  // Match the recorded canvas aspect so the preview shows it without cropping.
+  const aspect = landscape ? 16 / 9 : 9 / 16; // width / height
   const width = baseW;
   const height = Math.round(baseW / aspect);
+
+  // Mount the live compositing canvas (camera + overlay) into the preview.
+  useEffect(() => {
+    const host = canvasHostRef.current;
+    const canvas = canvasRef.current;
+    if (!host || !canvas) return;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.objectFit = 'cover';
+    canvas.style.display = 'block';
+    host.appendChild(canvas);
+    return () => { if (canvas.parentNode === host) host.removeChild(canvas); };
+  }, [canvasRef, streamReady]);
 
   const onPointerDown = useCallback((e: ReactPointerEvent) => {
     if (fullscreen) return;
@@ -123,12 +138,15 @@ export function CameraPreview() {
   return (
     <div style={containerStyle} className="select-none" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
       <div className={`relative w-full h-full overflow-hidden bg-black shadow-2xl border border-white/[0.14] ${fullscreen ? '' : 'rounded-2xl'}`}>
+        {/* Live composite (camera + countdown + info), exactly what gets recorded */}
+        <div ref={canvasHostRef} className="absolute inset-0" />
+        {/* Hidden camera source feeding the canvas */}
         <video
           ref={videoRef}
           muted
           playsInline
           autoPlay
-          className="w-full h-full object-cover -scale-x-100"
+          className="absolute w-px h-px opacity-0 pointer-events-none"
         />
 
         {/* REC badge */}

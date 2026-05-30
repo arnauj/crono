@@ -84,6 +84,14 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Create the compositing canvas eagerly so the preview can mount it right away.
+  if (canvasRef.current === null && typeof document !== 'undefined') {
+    const c = document.createElement('canvas');
+    const d = dimsFor(orientationRef.current);
+    c.width = d.w;
+    c.height = d.h;
+    canvasRef.current = c;
+  }
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -251,6 +259,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const startDrawLoop = useCallback(() => {
+    if (rafRef.current != null) return; // already running
     let last = 0;
     const render = (ts: number) => {
       rafRef.current = requestAnimationFrame(render);
@@ -279,6 +288,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
 
       const canvas = ensureCanvas();
       drawFrame();
+      startDrawLoop(); // no-op if the preview loop is already running
       const stream = canvas.captureStream(30);
       camera.getAudioTracks().forEach((track) => stream.addTrack(track));
 
@@ -300,7 +310,6 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
       };
       recorderRef.current = recorder;
       recordingRef.current = true;
-      startDrawLoop();
       recorder.start();
       setStatus('recording');
     } finally {
@@ -312,10 +321,10 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     if (doneTimerRef.current != null) { clearTimeout(doneTimerRef.current); doneTimerRef.current = null; }
     if (!recordingRef.current) return;
     recordingRef.current = false;
-    stopDrawLoop();
+    // Keep the draw loop running so the live preview continues.
     try { recorderRef.current?.stop(); } catch { /* ignore */ }
     recorderRef.current = null;
-  }, [stopDrawLoop]);
+  }, []);
 
   // Decide whether we should be recording based on enabled + active feeds.
   const evaluate = useCallback(() => {
@@ -388,6 +397,18 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   // Keep the preview element bound to the stream once both exist.
   useEffect(() => { attachStream(); }, [attachStream, streamReady]);
 
+  // Run the compositing loop the whole time the camera is on, so the live
+  // preview shows the same overlay (countdown + info) that gets recorded.
+  useEffect(() => {
+    if (streamReady) {
+      ensureCanvas();
+      startDrawLoop();
+    } else {
+      stopDrawLoop();
+    }
+    return () => stopDrawLoop();
+  }, [streamReady, ensureCanvas, startDrawLoop, stopDrawLoop]);
+
   // Follow the device orientation (also overridable via the rotate button).
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -414,7 +435,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value: RecordingContextValue = {
-    enabled, status, error, supported, result, videoRef, streamReady, orientation,
+    enabled, status, error, supported, result, videoRef, canvasRef, streamReady, orientation,
     toggle, toggleOrientation, clearResult, publish, registerFeed, notifyDone,
   };
 
