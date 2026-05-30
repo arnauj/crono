@@ -84,6 +84,10 @@ const translations: Record<Lang, Record<string, string>> = {
     'record.share': 'Share',
     'record.discard': 'Discard',
     'record.error': 'Camera access denied',
+    'record.rotate': 'Rotate',
+    'record.minimize': 'Minimize',
+    'record.expand': 'Expand',
+    'record.fullscreen': 'Fullscreen',
   },
   es: {
     'app.title': 'Crono',
@@ -150,6 +154,10 @@ const translations: Record<Lang, Record<string, string>> = {
     'record.share': 'Compartir',
     'record.discard': 'Descartar',
     'record.error': 'Acceso a la cámara denegado',
+    'record.rotate': 'Girar',
+    'record.minimize': 'Minimizar',
+    'record.expand': 'Ampliar',
+    'record.fullscreen': 'Pantalla completa',
   },
   de: {
     'app.title': 'Crono',
@@ -216,6 +224,10 @@ const translations: Record<Lang, Record<string, string>> = {
     'record.share': 'Teilen',
     'record.discard': 'Verwerfen',
     'record.error': 'Kamerazugriff verweigert',
+    'record.rotate': 'Drehen',
+    'record.minimize': 'Minimieren',
+    'record.expand': 'Vergrößern',
+    'record.fullscreen': 'Vollbild',
   },
   it: {
     'app.title': 'Crono',
@@ -282,6 +294,10 @@ const translations: Record<Lang, Record<string, string>> = {
     'record.share': 'Condividi',
     'record.discard': 'Scarta',
     'record.error': 'Accesso alla fotocamera negato',
+    'record.rotate': 'Ruota',
+    'record.minimize': 'Riduci',
+    'record.expand': 'Ingrandisci',
+    'record.fullscreen': 'Schermo intero',
   },
 };
 

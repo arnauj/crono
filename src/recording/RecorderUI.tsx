@@ -1,3 +1,7 @@
+import {
+  useCallback, useRef, useState,
+  type CSSProperties, type ReactNode, type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { useRecording } from './context';
 import { useT } from '../hooks/useI18n';
 
@@ -38,17 +42,87 @@ export function VideoRecordButton() {
   );
 }
 
-/* ── Floating live camera preview ── */
+/* ── Small overlay control button (shared by the preview toolbar) ── */
+function PreviewButton({ label, onClick, children }: {
+  label: string; onClick: () => void; children: ReactNode;
+}) {
+  return (
+    <button
+      aria-label={label}
+      title={label}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className="flex items-center justify-center w-7 h-7 rounded-lg bg-black/45 text-white/90 hover:bg-black/70 hover:text-white active:scale-90 transition-all backdrop-blur-sm"
+    >
+      {children}
+    </button>
+  );
+}
+
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max));
+
+/* ── Floating live camera preview: draggable, resizable, fullscreen, rotatable ── */
 export function CameraPreview() {
   const t = useT();
-  const { enabled, status, error, videoRef } = useRecording();
-  if (!enabled) return null;
+  const { enabled, status, error, videoRef, orientation, toggleOrientation } = useRecording();
 
+  const [pos, setPos] = useState(() => ({
+    x: 16,
+    y: typeof window !== 'undefined' ? window.innerHeight - 260 : 16,
+  }));
+  const [mini, setMini] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef({ startX: 0, startY: 0, origX: 0, origY: 0 });
+
+  const landscape = orientation === 'landscape';
+  const baseW = mini ? (landscape ? 168 : 100) : (landscape ? 280 : 168);
+  const aspect = landscape ? 16 / 9 : 3 / 4; // width / height
+  const width = baseW;
+  const height = Math.round(baseW / aspect);
+
+  const onPointerDown = useCallback((e: ReactPointerEvent) => {
+    if (fullscreen) return;
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y };
+    setDragging(true);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }, [fullscreen, pos]);
+
+  const onPointerMove = useCallback((e: ReactPointerEvent) => {
+    if (!dragging) return;
+    const { startX, startY, origX, origY } = dragRef.current;
+    const maxX = window.innerWidth - width - 8;
+    const maxY = window.innerHeight - height - 8;
+    setPos({
+      x: clamp(origX + e.clientX - startX, 8, Math.max(8, maxX)),
+      y: clamp(origY + e.clientY - startY, 8, Math.max(8, maxY)),
+    });
+  }, [dragging, width, height]);
+
+  const endDrag = useCallback((e: ReactPointerEvent) => {
+    setDragging(false);
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+  }, []);
+
+  if (!enabled) return null;
   const recording = status === 'recording';
 
+  const containerStyle: CSSProperties = fullscreen
+    ? { position: 'fixed', inset: 0, zIndex: 55 }
+    : {
+        position: 'fixed',
+        left: clamp(pos.x, 8, typeof window !== 'undefined' ? Math.max(8, window.innerWidth - width - 8) : pos.x),
+        top: clamp(pos.y, 8, typeof window !== 'undefined' ? Math.max(8, window.innerHeight - height - 8) : pos.y),
+        width,
+        height,
+        zIndex: 40,
+        touchAction: 'none',
+        cursor: dragging ? 'grabbing' : 'grab',
+      };
+
   return (
-    <div className="fixed bottom-5 left-5 z-40 w-28 md:w-36 select-none">
-      <div className="relative rounded-2xl overflow-hidden border border-white/[0.12] bg-black shadow-2xl aspect-[3/4]">
+    <div style={containerStyle} className="select-none" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
+      <div className={`relative w-full h-full overflow-hidden bg-black shadow-2xl border border-white/[0.14] ${fullscreen ? '' : 'rounded-2xl'}`}>
         <video
           ref={videoRef}
           muted
@@ -56,16 +130,44 @@ export function CameraPreview() {
           autoPlay
           className="w-full h-full object-cover -scale-x-100"
         />
+
+        {/* REC badge */}
         <div className="absolute top-1.5 left-1.5 flex items-center gap-1.5 rounded-full bg-black/55 px-2 py-0.5 backdrop-blur-sm">
           <span className={`inline-block w-2 h-2 rounded-full ${recording ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
           <span className="text-[10px] font-bold uppercase tracking-wider text-white">
             {recording ? t('record.recording') : 'REC'}
           </span>
         </div>
+
+        {/* Toolbar */}
+        <div className="absolute top-1.5 right-1.5 flex gap-1">
+          <PreviewButton label={t('record.rotate')} onClick={toggleOrientation}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 4v6h-6M1 20v-6h6" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+            </svg>
+          </PreviewButton>
+          {!fullscreen && (
+            <PreviewButton label={mini ? t('record.expand') : t('record.minimize')} onClick={() => setMini((m) => !m)}>
+              {mini ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" /></svg>
+              )}
+            </PreviewButton>
+          )}
+          <PreviewButton label={t('record.fullscreen')} onClick={() => setFullscreen((f) => !f)}>
+            {fullscreen ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3" /></svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" /></svg>
+            )}
+          </PreviewButton>
+        </div>
+
+        {error && (
+          <p className="absolute bottom-1.5 left-1.5 right-1.5 text-center text-[11px] leading-tight text-red-300 font-medium bg-black/55 rounded-md px-1 py-0.5">{error}</p>
+        )}
       </div>
-      {error && (
-        <p className="mt-1.5 text-[11px] leading-tight text-red-400 font-medium">{error}</p>
-      )}
     </div>
   );
 }

@@ -4,12 +4,18 @@ import { formatTime } from '../utils/format';
 import { t } from '../utils/i18n';
 import { loadSetting, saveSetting } from '../utils/storage';
 import {
-  RecordingContext, type RecorderInfo, type RecordingContextValue, type RecordingStatus,
+  RecordingContext, type RecorderInfo, type RecordingContextValue,
+  type RecordingStatus, type RecordingOrientation,
 } from './context';
 
-const CANVAS_W = 720;
-const CANVAS_H = 1280;
-const CAMERA_FRACTION = 0.55; // top portion of the frame used for the camera
+const PORTRAIT_DIMS = { w: 720, h: 1280 };
+const LANDSCAPE_DIMS = { w: 1280, h: 720 };
+const dimsFor = (o: RecordingOrientation) => (o === 'landscape' ? LANDSCAPE_DIMS : PORTRAIT_DIMS);
+
+const deviceOrientation = (): RecordingOrientation =>
+  typeof window !== 'undefined' && window.matchMedia?.('(orientation: landscape)').matches
+    ? 'landscape'
+    : 'portrait';
 
 const EMPTY_INFO: RecorderInfo = { phase: 'idle', time: 0, currentRound: 0, totalRounds: 0 };
 
@@ -72,6 +78,9 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RecordingContextValue['result']>(null);
   const [streamReady, setStreamReady] = useState(false);
+  const [orientation, setOrientation] = useState<RecordingOrientation>(deviceOrientation);
+  const orientationRef = useRef(orientation);
+  orientationRef.current = orientation;
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -128,13 +137,11 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
 
   // ── Canvas drawing ──
   const ensureCanvas = useCallback((): HTMLCanvasElement => {
-    if (!canvasRef.current) {
-      const c = document.createElement('canvas');
-      c.width = CANVAS_W;
-      c.height = CANVAS_H;
-      canvasRef.current = c;
-    }
-    return canvasRef.current;
+    const dims = dimsFor(orientationRef.current);
+    if (!canvasRef.current) canvasRef.current = document.createElement('canvas');
+    const c = canvasRef.current;
+    if (c.width !== dims.w || c.height !== dims.h) { c.width = dims.w; c.height = dims.h; }
+    return c;
   }, []);
 
   const drawFrame = useCallback(() => {
@@ -144,82 +151,104 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     const W = canvas.width;
     const H = canvas.height;
     const info = infoRef.current;
-    const camH = Math.round(H * CAMERA_FRACTION);
-    const capY = camH;
-    const capH = H - camH;
+    // Scale relative to the short side so layout matches in both orientations.
+    const s = Math.min(W, H) / 720;
 
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, W, H);
-
-    // Camera image (top)
+    // ── Camera fills the whole frame ──
     const v = videoRef.current;
     if (v && v.videoWidth) {
-      drawCover(ctx, v, 0, 0, W, camH);
+      drawCover(ctx, v, 0, 0, W, H);
     } else {
       ctx.fillStyle = '#101010';
-      ctx.fillRect(0, 0, W, camH);
+      ctx.fillRect(0, 0, W, H);
     }
-
-    // Caption panel (bottom) — colour follows the active phase, like the app.
-    const capBg = info.phase === 'rest' ? '#0b3d2a'
-      : info.phase === 'countdown' ? '#0c1220'
-      : '#0a0a0a';
-    ctx.fillStyle = capBg;
-    ctx.fillRect(0, capY, W, capH);
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.fillRect(0, capY, W, 2);
 
     ctx.textAlign = 'center';
 
-    // Line 1 — training type / block info
-    let topText = info.typeLabel ?? '';
-    if (info.blockLabel && info.blockTotal && info.blockTotal > 0) {
-      topText = `${info.blockLabel} · ${t('timer.block')} ${(info.blockIndex ?? 0) + 1}/${info.blockTotal}`;
-    }
-    if (topText) {
-      ctx.fillStyle = '#22d3ee';
-      ctx.font = '700 34px system-ui, sans-serif';
-      ctx.fillText(topText.toUpperCase(), W / 2, capY + 64);
-    }
-
-    // Phase badge
-    const { label, fg, bg } = phaseStyle(info.phase);
-    if (label) {
-      ctx.font = '800 40px system-ui, sans-serif';
-      const badgeH = 70;
-      const padX = 44;
-      const tw = ctx.measureText(label).width;
-      const bw = tw + padX * 2;
-      const bx = (W - bw) / 2;
-      const by = capY + 96;
-      roundRect(ctx, bx, by, bw, badgeH, badgeH / 2);
-      ctx.fillStyle = bg;
-      ctx.fill();
-      ctx.fillStyle = fg;
+    // ── Countdown: centred over the video, translucent ──
+    if (info.phase === 'countdown') {
+      ctx.save();
       ctx.textBaseline = 'middle';
-      ctx.fillText(label.toUpperCase(), W / 2, by + badgeH / 2 + 2);
-      ctx.textBaseline = 'alphabetic';
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = '#e5e7eb';
+      ctx.font = `600 ${Math.round(42 * s)}px system-ui, sans-serif`;
+      ctx.fillText(t('timer.getReady').toUpperCase(), W / 2, H / 2 - 150 * s);
+      ctx.globalAlpha = 0.8;
+      ctx.shadowColor = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur = 40 * s;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `800 ${Math.round(300 * s)}px ui-monospace, 'SF Mono', 'JetBrains Mono', monospace`;
+      ctx.fillText(String(info.time), W / 2, H / 2 + 10 * s);
+      ctx.restore();
+      return;
     }
 
-    // Round counter
-    if (info.totalRounds > 1 && (info.phase === 'work' || info.phase === 'rest')) {
-      ctx.font = '700 36px system-ui, sans-serif';
-      ctx.fillStyle = '#9ca3af';
-      ctx.fillText(`${t('timer.round')} ${info.currentRound} / ${info.totalRounds}`, W / 2, capY + 226);
+    if (info.phase !== 'work' && info.phase !== 'rest' && info.phase !== 'done') return;
+
+    // ── Compact info layer pinned to the bottom (1–2 centred lines) ──
+    const { label, fg } = phaseStyle(info.phase);
+
+    const parts1: string[] = [];
+    if (info.phase === 'done') {
+      parts1.push(label.toUpperCase());
+      if (info.elapsed != null) parts1.push(formatTime(info.elapsed));
+    } else {
+      parts1.push(label.toUpperCase(), formatTime(info.time));
+      if (info.totalRounds > 1) parts1.push(`${t('timer.round')} ${info.currentRound}/${info.totalRounds}`);
     }
+    const line1 = parts1.join('   ·   ');
 
-    // Big timer / countdown
-    const timeStr = info.phase === 'countdown' ? String(info.time) : formatTime(info.time);
-    ctx.fillStyle = info.phase === 'done' ? '#6b7280' : '#ffffff';
-    const big = info.phase === 'countdown' ? 168 : 132;
-    ctx.font = `700 ${big}px ui-monospace, 'SF Mono', 'JetBrains Mono', monospace`;
-    ctx.fillText(timeStr, W / 2, capY + capH - 74);
+    const parts2: string[] = [];
+    let typeText = info.typeLabel ?? '';
+    if (info.blockLabel && info.blockTotal && info.blockTotal > 0) {
+      typeText = `${info.blockLabel} ${(info.blockIndex ?? 0) + 1}/${info.blockTotal}`;
+    }
+    if (typeText) parts2.push(typeText.toUpperCase());
+    if (info.elapsed != null && info.phase !== 'done') {
+      parts2.push(`${(info.totalLabel ?? 'Total').toUpperCase()} ${formatTime(info.elapsed)}`);
+    }
+    const line2 = parts2.join('   ·   ');
 
-    // Total elapsed
-    if (info.elapsed != null && (info.phase === 'work' || info.phase === 'rest')) {
-      ctx.font = '600 28px system-ui, sans-serif';
-      ctx.fillStyle = '#6b7280';
-      ctx.fillText(`${(info.totalLabel ?? 'Total').toUpperCase()}  ${formatTime(info.elapsed)}`, W / 2, capY + capH - 28);
+    const f1 = Math.round(46 * s);
+    const f2 = Math.round(30 * s);
+    const padX = Math.round(42 * s);
+    const padY = Math.round(22 * s);
+    const gap = Math.round(12 * s);
+
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = `800 ${f1}px system-ui, sans-serif`;
+    const w1 = ctx.measureText(line1).width;
+    ctx.font = `600 ${f2}px system-ui, sans-serif`;
+    const w2 = line2 ? ctx.measureText(line2).width : 0;
+
+    const barW = Math.min(W - 32 * s, Math.max(w1, w2) + padX * 2);
+    const barH = padY * 2 + f1 + (line2 ? gap + f2 : 0);
+    const barX = (W - barW) / 2;
+    const barY = H - barH - 30 * s;
+
+    // Translucent backdrop — sits on top of the video like a higher layer.
+    ctx.save();
+    roundRect(ctx, barX, barY, barW, barH, 26 * s);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.shadowColor = 'rgba(0,0,0,0.45)';
+    ctx.shadowBlur = 24 * s;
+    ctx.fill();
+    ctx.restore();
+    roundRect(ctx, barX, barY, barW, barH, 26 * s);
+    ctx.lineWidth = Math.max(1, 2 * s);
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.stroke();
+
+    let y = barY + padY + f1 * 0.82;
+    ctx.font = `800 ${f1}px system-ui, sans-serif`;
+    ctx.fillStyle = info.phase === 'done' ? '#4ade80' : fg;
+    ctx.fillText(line1, W / 2, y);
+
+    if (line2) {
+      y += gap + f2 * 0.9;
+      ctx.font = `600 ${f2}px system-ui, sans-serif`;
+      ctx.fillStyle = '#d1d5db';
+      ctx.fillText(line2, W / 2, y);
     }
   }, []);
 
@@ -334,6 +363,10 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const toggleOrientation = useCallback(() => {
+    setOrientation((o) => (o === 'portrait' ? 'landscape' : 'portrait'));
+  }, []);
+
   const clearResult = useCallback(() => {
     setResult((prev) => {
       if (prev) URL.revokeObjectURL(prev.url);
@@ -357,6 +390,23 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   // Keep the preview element bound to the stream once both exist.
   useEffect(() => { attachStream(); }, [attachStream, streamReady]);
 
+  // Follow the device orientation (also overridable via the rotate button).
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(orientation: landscape)');
+    const handler = () => setOrientation(mq.matches ? 'landscape' : 'portrait');
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+
+  // Resize the (possibly live) recording canvas when the orientation changes.
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const dims = dimsFor(orientation);
+    if (c.width !== dims.w || c.height !== dims.h) { c.width = dims.w; c.height = dims.h; }
+  }, [orientation]);
+
   // Cleanup on unmount.
   useEffect(() => () => {
     stopRecording();
@@ -366,8 +416,8 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value: RecordingContextValue = {
-    enabled, status, error, supported, result, videoRef, streamReady,
-    toggle, clearResult, publish, registerFeed, notifyDone,
+    enabled, status, error, supported, result, videoRef, streamReady, orientation,
+    toggle, toggleOrientation, clearResult, publish, registerFeed, notifyDone,
   };
 
   return <RecordingContext.Provider value={value}>{children}</RecordingContext.Provider>;
