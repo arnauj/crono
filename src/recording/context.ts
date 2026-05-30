@@ -33,8 +33,12 @@ export interface RecordingContextValue {
   canvasRef: RefObject<HTMLCanvasElement | null>;
   streamReady: boolean;
   orientation: RecordingOrientation;
+  captionEnabled: boolean;
+  facingMode: 'user' | 'environment';
   toggle: () => void;
   toggleOrientation: () => void;
+  toggleCaption: () => void;
+  switchCamera: () => void;
   clearResult: () => void;
   // Wired up by TimerDisplay via useRecorderFeed.
   publish: (info: RecorderInfo) => void;

@@ -81,6 +81,12 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   const [orientation, setOrientation] = useState<RecordingOrientation>(deviceOrientation);
   const orientationRef = useRef(orientation);
   orientationRef.current = orientation;
+  const [captionEnabled, setCaptionEnabled] = useState<boolean>(() => loadSetting('recording-caption', true));
+  const captionRef = useRef(captionEnabled);
+  captionRef.current = captionEnabled;
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const facingModeRef = useRef(facingMode);
+  facingModeRef.current = facingMode;
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -94,6 +100,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   }
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const recorderStreamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const rafRef = useRef<number | null>(null);
   const infoRef = useRef<RecorderInfo>(EMPTY_INFO);
@@ -122,7 +129,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     if (cameraStreamRef.current) return cameraStreamRef.current;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: { ideal: facingModeRef.current }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: true,
       });
       cameraStreamRef.current = stream;
@@ -141,6 +148,47 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     cameraStreamRef.current?.getTracks().forEach((tr) => tr.stop());
     cameraStreamRef.current = null;
     setStreamReady(false);
+  }, []);
+
+  // Flip between the front (user) and back (environment) camera. The canvas
+  // keeps compositing from the <video> element, so the live preview and the
+  // recording follow the new camera seamlessly; we also swap the audio track
+  // into the active recorder stream so sound keeps working mid-recording.
+  const switchCamera = useCallback(async () => {
+    const next = facingModeRef.current === 'user' ? 'environment' : 'user';
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: next }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: true,
+      });
+    } catch {
+      setError(t('record.error'));
+      return;
+    }
+
+    const old = cameraStreamRef.current;
+    cameraStreamRef.current = stream;
+    facingModeRef.current = next;
+    setFacingMode(next);
+    setError(null);
+
+    // Keep the recorder's audio in sync with the newly selected camera.
+    const recStream = recorderStreamRef.current;
+    if (recStream) {
+      recStream.getAudioTracks().forEach((tr) => recStream.removeTrack(tr));
+      stream.getAudioTracks().forEach((tr) => recStream.addTrack(tr));
+    }
+
+    // Point the hidden <video> (canvas source) at the new stream.
+    const v = videoRef.current;
+    if (v) {
+      v.srcObject = stream;
+      v.play().catch(() => {});
+    }
+
+    // Release the previous camera now that nothing depends on it.
+    old?.getTracks().forEach((tr) => tr.stop());
   }, []);
 
   // ── Canvas drawing ──
@@ -170,6 +218,9 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
       ctx.fillStyle = '#101010';
       ctx.fillRect(0, 0, W, H);
     }
+
+    // The caption (legend) can be turned off to record a clean camera-only video.
+    if (!captionRef.current) return;
 
     ctx.textAlign = 'center';
 
@@ -215,17 +266,32 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     }
     const line2 = parts2.join('   ·   ');
 
-    const f1 = Math.round(46 * s);
-    const f2 = Math.round(30 * s);
     const padX = Math.round(42 * s);
     const padY = Math.round(22 * s);
     const gap = Math.round(12 * s);
 
     ctx.textBaseline = 'alphabetic';
-    ctx.font = `800 ${f1}px system-ui, sans-serif`;
-    const w1 = ctx.measureText(line1).width;
-    ctx.font = `600 ${f2}px system-ui, sans-serif`;
-    const w2 = line2 ? ctx.measureText(line2).width : 0;
+    let f1 = Math.round(46 * s);
+    let f2 = Math.round(30 * s);
+    const measure = () => {
+      ctx.font = `800 ${f1}px system-ui, sans-serif`;
+      const a = ctx.measureText(line1).width;
+      ctx.font = `600 ${f2}px system-ui, sans-serif`;
+      const b = line2 ? ctx.measureText(line2).width : 0;
+      return { w1: a, w2: b };
+    };
+    let { w1, w2 } = measure();
+
+    // Shrink the text (keeping both lines in proportion) so it never runs off
+    // screen — long captions in custom mode would otherwise overflow.
+    const maxTextW = W - 32 * s - padX * 2;
+    const widest = Math.max(w1, w2);
+    if (widest > maxTextW) {
+      const k = maxTextW / widest;
+      f1 = Math.max(1, Math.floor(f1 * k));
+      f2 = Math.max(1, Math.floor(f2 * k));
+      ({ w1, w2 } = measure());
+    }
 
     const barW = Math.min(W - 32 * s, Math.max(w1, w2) + padX * 2);
     const barH = padY * 2 + f1 + (line2 ? gap + f2 : 0);
@@ -291,6 +357,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
       startDrawLoop(); // no-op if the preview loop is already running
       const stream = canvas.captureStream(30);
       camera.getAudioTracks().forEach((track) => stream.addTrack(track));
+      recorderStreamRef.current = stream;
 
       const mimeType = pickMimeType();
       const recorder = new MediaRecorder(stream, mimeType
@@ -324,6 +391,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     // Keep the draw loop running so the live preview continues.
     try { recorderRef.current?.stop(); } catch { /* ignore */ }
     recorderRef.current = null;
+    recorderStreamRef.current = null;
   }, []);
 
   // Decide whether we should be recording based on enabled + active feeds.
@@ -372,6 +440,14 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
 
   const toggleOrientation = useCallback(() => {
     setOrientation((o) => (o === 'portrait' ? 'landscape' : 'portrait'));
+  }, []);
+
+  const toggleCaption = useCallback(() => {
+    setCaptionEnabled((prev) => {
+      const next = !prev;
+      saveSetting('recording-caption', next);
+      return next;
+    });
   }, []);
 
   const clearResult = useCallback(() => {
@@ -436,7 +512,8 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
 
   const value: RecordingContextValue = {
     enabled, status, error, supported, result, videoRef, canvasRef, streamReady, orientation,
-    toggle, toggleOrientation, clearResult, publish, registerFeed, notifyDone,
+    captionEnabled, facingMode,
+    toggle, toggleOrientation, toggleCaption, switchCamera, clearResult, publish, registerFeed, notifyDone,
   };
 
   return <RecordingContext.Provider value={value}>{children}</RecordingContext.Provider>;
