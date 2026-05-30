@@ -30,6 +30,7 @@ export interface RecordingContextValue {
   supported: boolean;
   result: { url: string; mime: string; filename: string } | null;
   videoRef: RefObject<HTMLVideoElement | null>;
+  canvasRef: RefObject<HTMLCanvasElement | null>;
   streamReady: boolean;
   orientation: RecordingOrientation;
   toggle: () => void;
