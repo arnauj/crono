@@ -21,6 +21,8 @@ export interface RecorderInfo {
 
 export type RecordingStatus = 'idle' | 'recording' | 'preview';
 
+export type RecordingOrientation = 'portrait' | 'landscape';
+
 export interface RecordingContextValue {
   enabled: boolean;
   status: RecordingStatus;
@@ -29,7 +31,9 @@ export interface RecordingContextValue {
   result: { url: string; mime: string; filename: string } | null;
   videoRef: RefObject<HTMLVideoElement | null>;
   streamReady: boolean;
+  orientation: RecordingOrientation;
   toggle: () => void;
+  toggleOrientation: () => void;
   clearResult: () => void;
   // Wired up by TimerDisplay via useRecorderFeed.
   publish: (info: RecorderInfo) => void;
