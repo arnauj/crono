@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
 import { LANGUAGES, getLang, setLang, type Lang } from '../utils/i18n';
+import { useRecording } from '../recording/context';
 
 interface SettingsPanelProps {
   open: boolean;
@@ -13,6 +14,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [countdown, setCountdown] = useState(() => loadSetting('countdown-seconds', 10));
   const [soundOn, setSoundOn] = useState(() => loadSetting('sound-enabled', true));
   const [lang, setLangState] = useState<Lang>(getLang);
+  const { supported: recordingSupported, captionEnabled, toggleCaption } = useRecording();
 
   if (!open) return null;
 
@@ -121,6 +123,28 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               `} />
             </button>
           </div>
+
+          {/* Video caption (legend burned into the recording) */}
+          {recordingSupported && (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-white text-base font-semibold">{t('settings.caption')}</p>
+                <p className="text-gray-500 text-sm">{t('settings.captionDesc')}</p>
+              </div>
+              <button
+                onClick={toggleCaption}
+                className={`
+                  relative w-14 h-8 rounded-full transition-colors duration-200
+                  ${captionEnabled ? 'bg-cyan-500' : 'bg-white/[0.1]'}
+                `}
+              >
+                <span className={`
+                  absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform duration-200
+                  ${captionEnabled ? 'translate-x-6' : 'translate-x-0'}
+                `} />
+              </button>
+            </div>
+          )}
 
         </div>
       </div>
