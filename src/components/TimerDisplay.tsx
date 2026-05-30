@@ -1,6 +1,7 @@
 import type { TimerPhase } from '../types/timer';
 import { formatTime } from '../utils/format';
 import { useT } from '../hooks/useI18n';
+import { useRecorderFeed } from '../recording/context';
 
 interface TimerDisplayProps {
   time: number;
@@ -11,11 +12,27 @@ interface TimerDisplayProps {
   blockLabel?: string;
   blockIndex?: number;
   blockTotal?: number;
+  typeLabel?: string;
+  elapsed?: number;
 }
 
-export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, blockLabel, blockIndex, blockTotal }: TimerDisplayProps) {
+export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, blockLabel, blockIndex, blockTotal, typeLabel, elapsed }: TimerDisplayProps) {
   const t = useT();
   const showBlockInfo = blockLabel != null && blockTotal != null && blockTotal > 0;
+
+  // Feed the live training info to the video recorder (when enabled).
+  useRecorderFeed({
+    phase,
+    time,
+    currentRound: currentRound ?? 0,
+    totalRounds: totalRounds ?? 0,
+    typeLabel,
+    blockLabel,
+    blockIndex,
+    blockTotal,
+    elapsed,
+    totalLabel: t('label.total'),
+  });
 
   const blockInfoEl = showBlockInfo && (
     <p className="mb-4 font-bold tracking-wide" style={{ fontSize: 'clamp(1.2rem, 4vw, 2.2rem)' }}>
