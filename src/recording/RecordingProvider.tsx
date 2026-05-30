@@ -165,31 +165,29 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
 
     ctx.textAlign = 'center';
 
-    // ── Countdown: centred over the video, translucent ──
+    // ── Countdown: big translucent number centred over the video ──
     if (info.phase === 'countdown') {
       ctx.save();
       ctx.textBaseline = 'middle';
-      ctx.globalAlpha = 0.6;
-      ctx.fillStyle = '#e5e7eb';
-      ctx.font = `600 ${Math.round(42 * s)}px system-ui, sans-serif`;
-      ctx.fillText(t('timer.getReady').toUpperCase(), W / 2, H / 2 - 150 * s);
-      ctx.globalAlpha = 0.8;
+      ctx.globalAlpha = 0.82;
       ctx.shadowColor = 'rgba(0,0,0,0.55)';
       ctx.shadowBlur = 40 * s;
       ctx.fillStyle = '#ffffff';
       ctx.font = `800 ${Math.round(300 * s)}px ui-monospace, 'SF Mono', 'JetBrains Mono', monospace`;
-      ctx.fillText(String(info.time), W / 2, H / 2 + 10 * s);
+      ctx.fillText(String(info.time), W / 2, H / 2);
       ctx.restore();
-      return;
     }
 
-    if (info.phase !== 'work' && info.phase !== 'rest' && info.phase !== 'done') return;
+    // The caption below is drawn for every active phase (countdown too).
+    if (info.phase === 'idle') return;
 
     // ── Compact info layer pinned to the bottom (1–2 centred lines) ──
     const { label, fg } = phaseStyle(info.phase);
 
     const parts1: string[] = [];
-    if (info.phase === 'done') {
+    if (info.phase === 'countdown') {
+      parts1.push(label.toUpperCase(), String(info.time));
+    } else if (info.phase === 'done') {
       parts1.push(label.toUpperCase());
       if (info.elapsed != null) parts1.push(formatTime(info.elapsed));
     } else {
@@ -204,7 +202,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
       typeText = `${info.blockLabel} ${(info.blockIndex ?? 0) + 1}/${info.blockTotal}`;
     }
     if (typeText) parts2.push(typeText.toUpperCase());
-    if (info.elapsed != null && info.phase !== 'done') {
+    if (info.elapsed != null && (info.phase === 'work' || info.phase === 'rest')) {
       parts2.push(`${(info.totalLabel ?? 'Total').toUpperCase()} ${formatTime(info.elapsed)}`);
     }
     const line2 = parts2.join('   ·   ');
