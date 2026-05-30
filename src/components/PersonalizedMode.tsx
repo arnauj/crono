@@ -441,6 +441,8 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
             blockLabel={currentBlock ? t(blockLabelKeys[currentBlock.type]) : undefined}
             blockIndex={activeBlockIndex}
             blockTotal={blocks.length}
+            typeLabel={t('mode.custom')}
+            elapsed={state.elapsed}
           />
           {state.phase !== 'countdown' && (
             <div className="text-center -mt-2 mb-2 flex items-center justify-center gap-4">

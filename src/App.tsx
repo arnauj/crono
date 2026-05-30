@@ -8,6 +8,8 @@ import { EmomMode } from './components/EmomMode';
 import { AmrapMode } from './components/AmrapMode';
 import { PersonalizedMode } from './components/PersonalizedMode';
 import { SettingsPanel } from './components/SettingsPanel';
+import { RecordingProvider } from './recording/RecordingProvider';
+import { VideoRecordButton, CameraPreview, RecordingResultModal } from './recording/RecorderUI';
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 const validModes: TimerMode[] = ['clock', 'tabata', 'fortime', 'emom', 'amrap', 'personalized'];
@@ -112,7 +114,7 @@ function App() {
   })();
 
   return (
-    <>
+    <RecordingProvider>
       {content}
       <div className="fixed top-6 right-6 z-40 flex gap-3 md:top-8 md:right-10">
         <button
@@ -134,6 +136,7 @@ function App() {
             }
           </svg>
         </button>
+        <VideoRecordButton />
         <button
           onClick={() => setSettingsOpen(true)}
           aria-label="Settings"
@@ -152,7 +155,9 @@ function App() {
         </button>
       </div>
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-    </>
+      <CameraPreview />
+      <RecordingResultModal />
+    </RecordingProvider>
   );
 }
 
