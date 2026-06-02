@@ -40,7 +40,7 @@ export function WodInfoPanel({ info }: { info: LoadedWod | null }) {
         title={`${t('wod.show')} · ${info.name}`}
         className="
           hidden md:flex fixed bottom-6 left-6 z-30 items-center justify-center
-          w-12 h-12 rounded-2xl
+          w-16 h-16 rounded-2xl
           bg-white/[0.06] border border-white/[0.08]
           text-amber-300
           hover:bg-white/[0.12] hover:text-amber-200 hover:border-white/[0.15]
@@ -48,7 +48,7 @@ export function WodInfoPanel({ info }: { info: LoadedWod | null }) {
           backdrop-blur-sm wod-panel-in
         "
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="8" y="3" width="8" height="4" rx="1" />
           <path d="M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2" />
           <path d="M9 12h6M9 16h4" />
@@ -57,25 +57,40 @@ export function WodInfoPanel({ info }: { info: LoadedWod | null }) {
     );
   }
 
+  // Movements are stored as a single string with parts separated by "·"; show
+  // each part on its own bulleted line so a multi-movement WOD reads as a list.
+  const movements = info.movements
+    ? info.movements.split('·').map((m) => m.trim()).filter(Boolean)
+    : [];
+
   return (
-    <div className="hidden md:block fixed bottom-6 left-6 z-30 w-72 wod-panel-in">
-      <div className="rounded-2xl bg-[#141414]/85 border border-white/[0.08] shadow-2xl backdrop-blur-md p-4">
+    <div className="hidden md:block fixed bottom-6 left-6 z-30 w-[26rem] max-w-[calc(100vw-3rem)] wod-panel-in">
+      <div className="rounded-3xl bg-[#141414]/85 border border-white/[0.08] shadow-2xl backdrop-blur-md p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <ModeBadge mode={info.mode} />
-            <h3 className="text-white text-lg font-bold tracking-tight truncate mt-2">{info.name}</h3>
+            <h3 className="text-white text-3xl font-bold tracking-tight truncate mt-3">{info.name}</h3>
           </div>
           <button
             onClick={() => setCollapsed(true)}
             aria-label={t('wod.hide')}
             title={t('wod.hide')}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/[0.08] active:scale-90 transition-all"
+            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/[0.08] active:scale-90 transition-all"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>
           </button>
         </div>
-        {info.scheme && <p className="text-gray-300 text-sm font-semibold mt-2">{info.scheme}</p>}
-        {info.movements && <p className="text-gray-500 text-sm leading-snug mt-0.5">{info.movements}</p>}
+        {info.scheme && <p className="text-gray-300 text-lg font-semibold mt-3">{info.scheme}</p>}
+        {movements.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {movements.map((m, i) => (
+              <li key={i} className="flex gap-2 text-gray-400 text-base leading-snug">
+                <span className="text-amber-400/70 shrink-0">–</span>
+                <span>{m}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
