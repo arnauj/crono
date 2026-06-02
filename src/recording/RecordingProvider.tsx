@@ -490,19 +490,22 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     setStatus('idle');
   }, []);
 
-  // Acquire / release the camera as the toggle changes. Turning the camera off
-  // ends the workout in progress (stopping & saving any active recording).
+  // Acquire the camera only once a workout has been loaded (armed) — so the
+  // camera screen stays hidden until the user chooses to do a workout. Turning
+  // the camera mode off ends the workout (stopping & saving any recording).
   useEffect(() => {
-    if (enabled) {
-      acquireCamera();
-    } else {
+    if (!enabled) {
       setArmed(false);
       setWorkoutStarted(false);
       stopRecording();
       resetWorkoutRef.current?.();
       releaseCamera();
+    } else if (armed) {
+      acquireCamera();
+    } else {
+      releaseCamera();
     }
-  }, [enabled, acquireCamera, releaseCamera, stopRecording]);
+  }, [enabled, armed, acquireCamera, releaseCamera, stopRecording]);
 
   // Keep the preview element bound to the stream once both exist.
   useEffect(() => { attachStream(); }, [attachStream, streamReady]);

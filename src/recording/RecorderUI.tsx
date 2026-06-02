@@ -191,7 +191,9 @@ export function CameraPreview() {
   // the preview expanded so the round button stays reachable.
   const actionPending = armed || (status === 'recording' && !workoutStarted);
 
-  if (!enabled) return null;
+  // The camera screen only appears once a workout has been loaded (armed) or
+  // while a recording is running — not merely because video mode is on.
+  if (!enabled || !(armed || status === 'recording')) return null;
   const recording = status === 'recording';
   const showBar = collapsed && !fullscreen && !actionPending;
 
