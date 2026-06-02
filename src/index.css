@@ -73,6 +73,15 @@ input[type="number"]::-webkit-outer-spin-button {
   animation: rec-hint 0.35s cubic-bezier(.22,1,.36,1) both;
 }
 
+/* Loaded-WOD panel: slide up from the corner as it mounts/toggles */
+@keyframes wod-panel-in {
+  0%   { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+.wod-panel-in {
+  animation: wod-panel-in 0.3s cubic-bezier(.22,1,.36,1) both;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

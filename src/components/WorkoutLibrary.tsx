@@ -4,28 +4,17 @@ import { WODS, type Wod, type WodCategory } from '../data/wods';
 import { loadFavorites, removeFavorite, type Favorite } from '../utils/favorites';
 import { useT } from '../hooks/useI18n';
 import { t as tRaw } from '../utils/i18n';
+import { ModeBadge } from './ModeBadge';
+import { modeLabelKey } from '../utils/modes';
+import type { LoadedWod } from './WodInfoPanel';
 
 interface WorkoutLibraryProps {
   open: boolean;
   onClose: () => void;
-  onLoad: (mode: TimerMode, settings: Record<string, unknown>) => void;
+  onLoad: (mode: TimerMode, settings: Record<string, unknown>, info: LoadedWod) => void;
 }
 
 type Tab = WodCategory | 'favorites';
-
-const modeStyles: Record<TimerMode, { bg: string; text: string }> = {
-  clock:        { bg: 'bg-blue-500/15',    text: 'text-blue-300' },
-  tabata:       { bg: 'bg-orange-500/15',  text: 'text-orange-300' },
-  fortime:      { bg: 'bg-emerald-500/15', text: 'text-emerald-300' },
-  emom:         { bg: 'bg-purple-500/15',  text: 'text-purple-300' },
-  amrap:        { bg: 'bg-rose-500/15',    text: 'text-rose-300' },
-  personalized: { bg: 'bg-cyan-500/15',    text: 'text-cyan-300' },
-};
-
-const modeLabelKey: Record<TimerMode, string> = {
-  clock: 'mode.clock', tabata: 'mode.tabata', fortime: 'mode.fortime',
-  emom: 'mode.emom', amrap: 'mode.amrap', personalized: 'mode.custom',
-};
 
 function fmtTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -49,15 +38,6 @@ function favoriteSummary(fav: Favorite, t: typeof tRaw): string {
     case 'personalized': return t('mode.custom');
     default: return t(modeLabelKey[fav.mode]);
   }
-}
-
-function ModeBadge({ mode, t }: { mode: TimerMode; t: typeof tRaw }) {
-  const s = modeStyles[mode];
-  return (
-    <span className={`${s.bg} ${s.text} text-[11px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0`}>
-      {t(modeLabelKey[mode])}
-    </span>
-  );
 }
 
 function LoadButton({ onClick, label }: { onClick: () => void; label: string }) {
@@ -109,12 +89,15 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 mb-1.5">
             <h4 className="text-white text-lg font-bold tracking-tight truncate">{w.name}</h4>
-            <ModeBadge mode={w.mode} t={t} />
+            <ModeBadge mode={w.mode} />
           </div>
           <p className="text-gray-300 text-sm font-semibold">{w.scheme}</p>
           <p className="text-gray-500 text-sm leading-snug mt-0.5">{w.movements}</p>
         </div>
-        <LoadButton label={t('library.load')} onClick={() => onLoad(w.mode, w.settings)} />
+        <LoadButton
+          label={t('library.load')}
+          onClick={() => onLoad(w.mode, w.settings, { name: w.name, mode: w.mode, scheme: w.scheme, movements: w.movements })}
+        />
       </div>
     </li>
   );
@@ -183,12 +166,15 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2.5 mb-1.5">
                           <h4 className="text-white text-lg font-bold tracking-tight truncate">{f.name}</h4>
-                          <ModeBadge mode={f.mode} t={t} />
+                          <ModeBadge mode={f.mode} />
                         </div>
                         <p className="text-gray-400 text-sm font-semibold">{favoriteSummary(f, t)}</p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <LoadButton label={t('library.load')} onClick={() => onLoad(f.mode, f.settings)} />
+                        <LoadButton
+                          label={t('library.load')}
+                          onClick={() => onLoad(f.mode, f.settings, { name: f.name, mode: f.mode, scheme: favoriteSummary(f, t) })}
+                        />
                         <button
                           onClick={() => deleteFav(f.id)}
                           aria-label={t('library.delete')}
