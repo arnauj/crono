@@ -3,6 +3,7 @@ import { TimerLayout } from './TimerLayout';
 import { TimerDisplay } from './TimerDisplay';
 import { Controls } from './Controls';
 import { DurationInput } from './DurationInput';
+import { FavoriteButton } from './FavoriteButton';
 import { useTimer, buildAmrapSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
@@ -30,6 +31,7 @@ export function AmrapMode({ onBack }: AmrapModeProps) {
           <div className="w-full flex flex-col gap-5">
             <DurationInput label={t('label.duration')} seconds={seconds} onChange={setSeconds} min={1} />
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
+            <FavoriteButton mode="amrap" defaultName={t('mode.amrap')} getSettings={() => ({ 'amrap-seconds': seconds })} />
           </div>
         </div>
       ) : (

@@ -4,6 +4,7 @@ import { TimerDisplay } from './TimerDisplay';
 import { Controls } from './Controls';
 import { NumberInput } from './NumberInput';
 import { DurationInput } from './DurationInput';
+import { FavoriteButton } from './FavoriteButton';
 import { useTimer, buildEmomSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
@@ -47,6 +48,12 @@ export function EmomMode({ onBack }: EmomModeProps) {
             <NumberInput label={t('label.for')} value={rounds} onChange={setRounds} min={1} suffix={t('suffix.rounds')} />
             <DurationInput label={t('label.rest')} seconds={restSec} onChange={setRestSec} min={0} />
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
+            <FavoriteButton mode="emom" defaultName={t('mode.emom')} getSettings={() => ({
+              'emom-min': Math.floor(intervalSeconds / 60),
+              'emom-sec': intervalSeconds % 60,
+              'emom-rounds': rounds,
+              'emom-rest': restSec,
+            })} />
           </div>
         </div>
       ) : (

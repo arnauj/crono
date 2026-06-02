@@ -3,6 +3,7 @@ import { TimerLayout } from './TimerLayout';
 import { TimerDisplay } from './TimerDisplay';
 import { Controls } from './Controls';
 import { DurationInput } from './DurationInput';
+import { FavoriteButton } from './FavoriteButton';
 import type { BlockType, TrainingBlock, TabataConfig, ForTimeConfig, EmomConfig, AmrapConfig, RestConfig } from '../types/timer';
 import { useTimer, buildTabataSegments, buildForTimeSegments, buildEmomSegments, buildAmrapSegments, buildRestSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
@@ -432,6 +433,10 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
               <ConfigRow label={t('label.totalRounds')} value={totalRounds} onChange={setTotalRounds} min={1} />
             </div>
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
+            <FavoriteButton mode="personalized" defaultName={t('mode.custom')} getSettings={() => ({
+              'personalized-blocks': blocks,
+              'personalized-rounds': totalRounds,
+            })} />
           </div>
         </div>
       ) : (

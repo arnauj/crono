@@ -4,6 +4,7 @@ import { TimerDisplay } from './TimerDisplay';
 import { Controls } from './Controls';
 import { NumberInput } from './NumberInput';
 import { DurationInput } from './DurationInput';
+import { FavoriteButton } from './FavoriteButton';
 import { useTimer, buildTabataSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
@@ -43,6 +44,11 @@ export function TabataMode({ onBack }: TabataModeProps) {
             <DurationInput label={t('label.work')} seconds={workSec} onChange={setWorkSec} min={1} />
             <DurationInput label={t('label.rest')} seconds={restSec} onChange={setRestSec} min={0} />
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
+            <FavoriteButton mode="tabata" defaultName={t('mode.tabata')} getSettings={() => ({
+              'tabata-rounds': rounds,
+              'tabata-work': workSec,
+              'tabata-rest': restSec,
+            })} />
           </div>
         </div>
       ) : (
