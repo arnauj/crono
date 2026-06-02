@@ -7,6 +7,7 @@ import { DurationInput } from './DurationInput';
 import { useTimer, buildEmomSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
+import { useCameraWorkout } from '../recording/context';
 
 interface EmomModeProps { onBack: () => void; }
 
@@ -30,6 +31,7 @@ export function EmomMode({ onBack }: EmomModeProps) {
     start();
   };
   const handleBack = () => { reset(); onBack(); };
+  useCameraWorkout({ phase: state.phase, start: handleStart, reset });
 
   const subtitle = state.phase === 'work' || state.phase === 'rest'
     ? t('sub.roundOf', { current: state.currentRound, total: state.totalRounds })

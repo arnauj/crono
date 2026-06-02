@@ -1,4 +1,5 @@
 import { useT } from '../hooks/useI18n';
+import { useRecording } from '../recording/context';
 
 interface ControlsProps {
   isRunning: boolean;
@@ -18,8 +19,48 @@ const base = `
 
 export function Controls({ isRunning, isStarted, isDone, onStart, onPause, onReset }: ControlsProps) {
   const t = useT();
+  const { enabled: cameraMode, armed, arm, cancelCameraWorkout } = useRecording();
 
   if (!isStarted || isDone) {
+    // ── Camera mode: the main button "loads" the workout, then the round
+    // button inside the camera starts recording and the workout. ──
+    if (cameraMode) {
+      return (
+        <div className="shrink-0 w-full mt-12 md:mt-14">
+          <button
+            onClick={armed ? cancelCameraWorkout : arm}
+            aria-pressed={armed}
+            className={`${base}
+              relative w-full h-18 md:h-20 text-xl md:text-2xl
+              flex items-center justify-center gap-3
+              ${armed
+                ? 'bg-white/[0.06] border border-red-500/40 text-red-300 hover:bg-white/[0.1] shadow-none'
+                : 'bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-400 hover:to-red-500 focus-visible:ring-red-400 shadow-red-500/25'
+              }
+            `}
+          >
+            {armed ? (
+              <>
+                <span className="relative flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+                </span>
+                {t('record.ready')}
+              </>
+            ) : (
+              <>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 7l-7 5 7 5V7z" />
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                </svg>
+                {t('btn.loadWorkout')}
+              </>
+            )}
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="shrink-0 w-full mt-12 md:mt-14">
         <button
