@@ -89,7 +89,9 @@ function CameraWorkoutControl({ compact }: { compact?: boolean }) {
 
   return (
     <div
-      className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 pointer-events-none"
+      /* Sit above the burned-in info legend (which hugs the bottom of the frame)
+         so the round button never covers it. */
+      className="absolute bottom-[26%] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 pointer-events-none"
       onPointerDown={(e) => e.stopPropagation()}
     >
       {!compact && (

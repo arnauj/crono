@@ -3,6 +3,7 @@ import { TimerLayout } from './TimerLayout';
 import { TimerDisplay } from './TimerDisplay';
 import { Controls } from './Controls';
 import { DurationInput } from './DurationInput';
+import { FavoriteButton } from './FavoriteButton';
 import { useTimer, buildForTimeSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
@@ -30,6 +31,7 @@ export function ForTimeMode({ onBack }: ForTimeModeProps) {
           <div className="w-full flex flex-col gap-5">
             <DurationInput label={t('label.timeCap')} seconds={seconds} onChange={setSeconds} min={1} />
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />
+            <FavoriteButton mode="fortime" defaultName={t('mode.fortime')} getSettings={() => ({ 'fortime-seconds': seconds })} />
           </div>
         </div>
       ) : (

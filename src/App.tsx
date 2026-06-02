@@ -8,8 +8,11 @@ import { EmomMode } from './components/EmomMode';
 import { AmrapMode } from './components/AmrapMode';
 import { PersonalizedMode } from './components/PersonalizedMode';
 import { SettingsPanel } from './components/SettingsPanel';
+import { WorkoutLibrary } from './components/WorkoutLibrary';
+import { saveSetting } from './utils/storage';
 import { RecordingProvider } from './recording/RecordingProvider';
 import { VideoRecordButton, CameraPreview, RecordingResultModal } from './recording/RecorderUI';
+import { useT } from './hooks/useI18n';
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 const validModes: TimerMode[] = ['clock', 'tabata', 'fortime', 'emom', 'amrap', 'personalized'];
@@ -26,8 +29,13 @@ const subscribeFullscreen = (cb: () => void) => {
 const getFullscreen = () => !!document.fullscreenElement;
 
 function App() {
+  const t = useT();
   const [mode, setMode] = useState<TimerMode | null>(modeFromPath);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  // Bumped each time a workout is loaded so the target mode remounts and re-reads
+  // its freshly written settings — even when we're already in that mode.
+  const [loadKey, setLoadKey] = useState(0);
   const isFullscreen = useSyncExternalStore(subscribeFullscreen, getFullscreen);
 
   const toggleFullscreen = useCallback(() => {
@@ -45,6 +53,15 @@ function App() {
   }, []);
 
   const goBack = useCallback(() => navigate(null), [navigate]);
+
+  // Load a benchmark WOD or saved favorite: persist its settings under the keys
+  // the target mode reads, then navigate there (remounting via loadKey).
+  const loadWorkout = useCallback((targetMode: TimerMode, settings: Record<string, unknown>) => {
+    for (const [key, value] of Object.entries(settings)) saveSetting(key, value);
+    setLibraryOpen(false);
+    setLoadKey((k) => k + 1);
+    navigate(targetMode);
+  }, [navigate]);
 
   // Handle browser back/forward
   useEffect(() => {
@@ -103,13 +120,15 @@ function App() {
 
   const content = (() => {
     if (!mode) return <MainMenu onSelectMode={navigate} />;
+    // `loadKey` in the key forces a remount when a workout is loaded into the
+    // mode we're already viewing, so it picks up the new settings.
     switch (mode) {
-      case 'clock': return <ClockMode onBack={goBack} />;
-      case 'tabata': return <TabataMode onBack={goBack} />;
-      case 'fortime': return <ForTimeMode onBack={goBack} />;
-      case 'emom': return <EmomMode onBack={goBack} />;
-      case 'amrap': return <AmrapMode onBack={goBack} />;
-      case 'personalized': return <PersonalizedMode onBack={goBack} />;
+      case 'clock': return <ClockMode key={loadKey} onBack={goBack} />;
+      case 'tabata': return <TabataMode key={loadKey} onBack={goBack} />;
+      case 'fortime': return <ForTimeMode key={loadKey} onBack={goBack} />;
+      case 'emom': return <EmomMode key={loadKey} onBack={goBack} />;
+      case 'amrap': return <AmrapMode key={loadKey} onBack={goBack} />;
+      case 'personalized': return <PersonalizedMode key={loadKey} onBack={goBack} />;
     }
   })();
 
@@ -136,6 +155,23 @@ function App() {
             }
           </svg>
         </button>
+        <button
+          onClick={() => setLibraryOpen(true)}
+          aria-label={t('library.open')}
+          title={t('library.open')}
+          className="
+            flex items-center justify-center w-12 h-12 rounded-2xl
+            bg-white/[0.06] border border-white/[0.08]
+            text-gray-300
+            hover:bg-white/[0.12] hover:text-white hover:border-white/[0.15]
+            active:scale-95 transition-all duration-200
+            backdrop-blur-sm
+          "
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+          </svg>
+        </button>
         <VideoRecordButton />
         <button
           onClick={() => setSettingsOpen(true)}
@@ -155,6 +191,7 @@ function App() {
         </button>
       </div>
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <WorkoutLibrary open={libraryOpen} onClose={() => setLibraryOpen(false)} onLoad={loadWorkout} />
       <CameraPreview />
       <RecordingResultModal />
     </RecordingProvider>
