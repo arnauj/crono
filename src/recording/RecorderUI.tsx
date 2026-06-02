@@ -61,10 +61,76 @@ function PreviewButton({ label, onClick, children }: {
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max));
 
+/* ── Bottom-centre control inside the camera: record → start → stop ──
+   Mirrors the camera-driven workout flow: an empty camera shows a round red
+   record button; once recording, it becomes a green "start" button to begin the
+   workout; once running, a red "stop" button ends it. */
+function CameraWorkoutControl({ compact }: { compact?: boolean }) {
+  const t = useT();
+  const { armed, status, workoutStarted, startRecordingManual, startWorkout, stopWorkout } = useRecording();
+
+  const recording = status === 'recording';
+  const kind: 'record' | 'start' | 'stop' | null =
+    recording ? (workoutStarted ? 'stop' : 'start') : (armed ? 'record' : null);
+  if (!kind) return null;
+
+  const size = compact ? 'w-14 h-14' : 'w-[4.5rem] h-[4.5rem]';
+  const ringPad = compact ? 'p-[3px]' : 'p-1';
+
+  const hint =
+    kind === 'record' ? t('record.startRecording')
+    : kind === 'start' ? t('record.tapToStart')
+    : t('btn.stop');
+
+  const onClick =
+    kind === 'record' ? startRecordingManual
+    : kind === 'start' ? startWorkout
+    : stopWorkout;
+
+  return (
+    <div
+      className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 pointer-events-none"
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      {!compact && (
+        <span className="pointer-events-none select-none rounded-full bg-black/55 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white/90 backdrop-blur-sm animate-rec-hint">
+          {hint}
+        </span>
+      )}
+
+      <button
+        aria-label={hint}
+        title={hint}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        className={`pointer-events-auto ${size} ${ringPad} rounded-full flex items-center justify-center
+          border-[3px] border-white/90 bg-black/30 backdrop-blur-sm shadow-2xl
+          transition-all duration-200 active:scale-90 hover:border-white`}
+      >
+        {kind === 'record' && (
+          <span className="block w-full h-full rounded-full bg-red-500 shadow-[0_0_18px_rgba(239,68,68,0.7)] animate-rec-pulse" />
+        )}
+        {kind === 'start' && (
+          <span className="flex w-full h-full items-center justify-center rounded-full bg-gradient-to-b from-green-400 to-green-500 shadow-[0_0_18px_rgba(34,197,94,0.7)] animate-rec-pulse">
+            <svg width={compact ? 20 : 26} height={compact ? 20 : 26} viewBox="0 0 24 24" fill="#06240f" className="ml-[2px]">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </span>
+        )}
+        {kind === 'stop' && (
+          <span className="flex w-full h-full items-center justify-center rounded-full bg-gradient-to-b from-red-500 to-red-600 shadow-[0_0_18px_rgba(239,68,68,0.7)]">
+            <span className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} rounded-[5px] bg-white`} />
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
+
 /* ── Floating live camera preview: draggable, resizable, fullscreen, rotatable ── */
 export function CameraPreview() {
   const t = useT();
-  const { enabled, status, error, videoRef, canvasRef, streamReady, orientation, toggleOrientation, switchCamera } = useRecording();
+  const { enabled, status, error, videoRef, canvasRef, streamReady, orientation, toggleOrientation, switchCamera, armed, workoutStarted } = useRecording();
 
   const [pos, setPos] = useState(() => ({
     x: 16,
@@ -121,9 +187,15 @@ export function CameraPreview() {
     try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
   }, []);
 
-  if (!enabled) return null;
+  // While there's a pending action (load to record, or record to start), keep
+  // the preview expanded so the round button stays reachable.
+  const actionPending = armed || (status === 'recording' && !workoutStarted);
+
+  // The camera screen only appears once a workout has been loaded (armed) or
+  // while a recording is running — not merely because video mode is on.
+  if (!enabled || !(armed || status === 'recording')) return null;
   const recording = status === 'recording';
-  const showBar = collapsed && !fullscreen;
+  const showBar = collapsed && !fullscreen && !actionPending;
 
   const containerStyle: CSSProperties = fullscreen
     ? { position: 'fixed', inset: 0, zIndex: 55 }
@@ -212,8 +284,11 @@ export function CameraPreview() {
             </div>
 
             {error && (
-              <p className="absolute bottom-1.5 left-1.5 right-1.5 text-center text-[11px] leading-tight text-red-300 font-medium bg-black/55 rounded-md px-1 py-0.5">{error}</p>
+              <p className="absolute top-9 left-1.5 right-1.5 text-center text-[11px] leading-tight text-red-300 font-medium bg-black/55 rounded-md px-1 py-0.5">{error}</p>
             )}
+
+            {/* Camera-driven workout control (record → start → stop) */}
+            <CameraWorkoutControl compact={!fullscreen} />
           </div>
         </div>
       )}

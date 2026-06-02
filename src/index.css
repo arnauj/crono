@@ -55,6 +55,24 @@ input[type="number"]::-webkit-outer-spin-button {
   text-shadow: 0 0 60px rgba(255,255,255,0.08);
 }
 
+/* Camera record/start button: breathing pulse to invite the tap */
+@keyframes rec-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(0.86); opacity: 0.9; }
+}
+.animate-rec-pulse {
+  animation: rec-pulse 1.6s ease-in-out infinite;
+}
+
+/* Hint label above the camera control: gentle fade-in + float */
+@keyframes rec-hint {
+  0%   { transform: translateY(6px); opacity: 0; }
+  100% { transform: translateY(0);   opacity: 1; }
+}
+.animate-rec-hint {
+  animation: rec-hint 0.35s cubic-bezier(.22,1,.36,1) both;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

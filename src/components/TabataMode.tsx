@@ -7,6 +7,7 @@ import { DurationInput } from './DurationInput';
 import { useTimer, buildTabataSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
+import { useCameraWorkout } from '../recording/context';
 
 interface TabataModeProps { onBack: () => void; }
 
@@ -26,6 +27,7 @@ export function TabataMode({ onBack }: TabataModeProps) {
     start();
   };
   const handleBack = () => { reset(); onBack(); };
+  useCameraWorkout({ phase: state.phase, start: handleStart, reset });
 
   const subtitle = state.phase === 'work' || state.phase === 'rest'
     ? t('sub.roundOf', { current: state.currentRound, total: state.totalRounds })

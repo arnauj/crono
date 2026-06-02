@@ -9,6 +9,7 @@ import { loadSetting, saveSetting } from '../utils/storage';
 import { formatTime } from '../utils/format';
 import { useT } from '../hooks/useI18n';
 import { t as tRaw } from '../utils/i18n';
+import { useCameraWorkout } from '../recording/context';
 
 interface PersonalizedModeProps { onBack: () => void; }
 
@@ -320,6 +321,7 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
 
   const handleStart = () => { if (!blocks.length) return; saveSetting('personalized-blocks', blocks); saveSetting('personalized-rounds', totalRounds); start(); };
   const handleBack = () => { reset(); onBack(); };
+  useCameraWorkout({ phase: state.phase, start: handleStart, reset });
 
   const [expandedBlockId, setExpandedBlockId] = useState<string | null>(() => blocks.length > 0 ? blocks[blocks.length - 1].id : null);
   const addBlock = useCallback(() => {

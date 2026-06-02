@@ -78,6 +78,13 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RecordingContextValue['result']>(null);
   const [streamReady, setStreamReady] = useState(false);
+  // Camera-driven workout flow.
+  const [armed, setArmed] = useState(false);
+  const [workoutStarted, setWorkoutStarted] = useState(false);
+  const workoutStartedRef = useRef(workoutStarted);
+  workoutStartedRef.current = workoutStarted;
+  const startWorkoutRef = useRef<(() => void) | null>(null);
+  const resetWorkoutRef = useRef<(() => void) | null>(null);
   const [orientation, setOrientation] = useState<RecordingOrientation>(deviceOrientation);
   const orientationRef = useRef(orientation);
   orientationRef.current = orientation;
@@ -109,10 +116,8 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   enabledRef.current = enabled;
   const statusRef = useRef<RecordingStatus>(status);
   statusRef.current = status;
-  const activeFeedsRef = useRef(0);
   const recordingRef = useRef(false);
   const startingRef = useRef(false);
-  const stopTimerRef = useRef<number | null>(null);
   const doneTimerRef = useRef<number | null>(null);
 
   // ── Camera ──
@@ -344,13 +349,16 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── Recording lifecycle ──
-  const beginRecording = useCallback(async () => {
+  // Begin the actual MediaRecorder. Triggered manually by the round record
+  // button in the camera (the workout itself is started separately).
+  const startRecordingManual = useCallback(async () => {
     if (recordingRef.current || startingRef.current) return;
     if (statusRef.current === 'preview') return;
+    if (!enabledRef.current) return;
     startingRef.current = true;
     try {
       const camera = await acquireCamera();
-      if (!camera || !enabledRef.current || activeFeedsRef.current <= 0) return;
+      if (!camera || !enabledRef.current) return;
 
       const canvas = ensureCanvas();
       drawFrame();
@@ -394,30 +402,6 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     recorderStreamRef.current = null;
   }, []);
 
-  // Decide whether we should be recording based on enabled + active feeds.
-  const evaluate = useCallback(() => {
-    if (enabledRef.current && activeFeedsRef.current > 0 && !recordingRef.current && statusRef.current !== 'preview') {
-      void beginRecording();
-    } else if ((!enabledRef.current || activeFeedsRef.current <= 0) && recordingRef.current) {
-      stopRecording();
-    }
-  }, [beginRecording, stopRecording]);
-
-  const registerFeed = useCallback((): (() => void) => {
-    activeFeedsRef.current += 1;
-    if (stopTimerRef.current != null) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
-    evaluate();
-    return () => {
-      activeFeedsRef.current = Math.max(0, activeFeedsRef.current - 1);
-      // Debounce so a Strict-Mode remount (mount→unmount→mount) doesn't stop us.
-      if (stopTimerRef.current != null) clearTimeout(stopTimerRef.current);
-      stopTimerRef.current = window.setTimeout(() => {
-        stopTimerRef.current = null;
-        if (activeFeedsRef.current <= 0) stopRecording();
-      }, 60);
-    };
-  }, [evaluate, stopRecording]);
-
   const publish = useCallback((info: RecorderInfo) => { infoRef.current = info; }, []);
 
   // When the workout completes, linger briefly on the "Complete" screen, then save.
@@ -425,8 +409,56 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     if (!recordingRef.current || doneTimerRef.current != null) return;
     doneTimerRef.current = window.setTimeout(() => {
       doneTimerRef.current = null;
+      setArmed(false);
+      setWorkoutStarted(false);
       stopRecording();
     }, 1600);
+  }, [stopRecording]);
+
+  // ── Camera-driven workout controls ──
+  const registerWorkoutControls = useCallback((start: () => void, reset: () => void) => {
+    startWorkoutRef.current = start;
+    resetWorkoutRef.current = reset;
+  }, []);
+
+  // "Cargar entreno" — load the workout and reveal the camera record button.
+  const arm = useCallback(() => {
+    if (!enabledRef.current) return;
+    setError(null);
+    setArmed(true);
+  }, []);
+
+  const disarm = useCallback(() => setArmed(false), []);
+
+  // Round red button → start recording (the workout is still idle).
+  const startWorkout = useCallback(() => {
+    setWorkoutStarted(true);
+    startWorkoutRef.current?.();
+  }, []);
+
+  // "Detener" → reset the timer, stop & save the recording.
+  const stopWorkout = useCallback(() => {
+    setWorkoutStarted(false);
+    setArmed(false);
+    stopRecording();
+    resetWorkoutRef.current?.();
+  }, [stopRecording]);
+
+  // Leaving the mode (back navigation) — drop everything, saving if recording.
+  const cancelCameraWorkout = useCallback(() => {
+    setArmed(false);
+    setWorkoutStarted(false);
+    if (recordingRef.current) stopRecording();
+  }, [stopRecording]);
+
+  // Keep the recorder honest if the workout is reset from the main controls
+  // while we're recording (e.g. the on-screen Reset button): stop & save.
+  const syncPhase = useCallback((phase: TimerPhase) => {
+    if (recordingRef.current && workoutStartedRef.current && phase === 'idle') {
+      setArmed(false);
+      setWorkoutStarted(false);
+      stopRecording();
+    }
   }, [stopRecording]);
 
   const toggle = useCallback(() => {
@@ -456,19 +488,24 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
       return null;
     });
     setStatus('idle');
-    // A training may already be active again — re-check.
-    setTimeout(evaluate, 0);
-  }, [evaluate]);
+  }, []);
 
-  // Acquire / release the camera as the toggle changes.
+  // Acquire the camera only once a workout has been loaded (armed) — so the
+  // camera screen stays hidden until the user chooses to do a workout. Turning
+  // the camera mode off ends the workout (stopping & saving any recording).
   useEffect(() => {
-    if (enabled) {
+    if (!enabled) {
+      setArmed(false);
+      setWorkoutStarted(false);
+      stopRecording();
+      resetWorkoutRef.current?.();
+      releaseCamera();
+    } else if (armed) {
       acquireCamera();
     } else {
-      stopRecording();
       releaseCamera();
     }
-  }, [enabled, acquireCamera, releaseCamera, stopRecording]);
+  }, [enabled, armed, acquireCamera, releaseCamera, stopRecording]);
 
   // Keep the preview element bound to the stream once both exist.
   useEffect(() => { attachStream(); }, [attachStream, streamReady]);
@@ -512,8 +549,10 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
 
   const value: RecordingContextValue = {
     enabled, status, error, supported, result, videoRef, canvasRef, streamReady, orientation,
-    captionEnabled, facingMode,
-    toggle, toggleOrientation, toggleCaption, switchCamera, clearResult, publish, registerFeed, notifyDone,
+    captionEnabled, facingMode, armed, workoutStarted,
+    toggle, toggleOrientation, toggleCaption, switchCamera, clearResult,
+    arm, disarm, startRecordingManual, startWorkout, stopWorkout,
+    publish, notifyDone, registerWorkoutControls, syncPhase, cancelCameraWorkout,
   };
 
   return <RecordingContext.Provider value={value}>{children}</RecordingContext.Provider>;

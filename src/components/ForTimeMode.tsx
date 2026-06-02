@@ -6,6 +6,7 @@ import { DurationInput } from './DurationInput';
 import { useTimer, buildForTimeSegments } from '../hooks/useTimer';
 import { loadSetting, saveSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
+import { useCameraWorkout } from '../recording/context';
 
 interface ForTimeModeProps { onBack: () => void; }
 
@@ -18,6 +19,7 @@ export function ForTimeMode({ onBack }: ForTimeModeProps) {
 
   const handleStart = () => { saveSetting('fortime-seconds', seconds); start(); };
   const handleBack = () => { reset(); onBack(); };
+  useCameraWorkout({ phase: state.phase, start: handleStart, reset });
 
   const subtitle = state.phase === 'done' ? t('sub.minCompleted', { min: Math.round(seconds / 60) }) : undefined;
 
