@@ -53,7 +53,7 @@ export function TabataMode({ onBack }: TabataModeProps) {
         </div>
       ) : (
         <>
-          <TimerDisplay time={state.timeLeft} phase={state.phase} currentRound={state.currentRound} totalRounds={state.totalRounds} onClick={state.phase !== 'done' ? pause : undefined} typeLabel={t('mode.tabata')} elapsed={state.elapsed} />
+          <TimerDisplay time={state.timeLeft} phase={state.phase} currentRound={state.currentRound} totalRounds={state.totalRounds} onClick={state.phase !== 'done' ? pause : undefined} typeLabel={t('mode.tabata')} elapsed={state.elapsed} isRunning={state.isRunning} />
           <Controls isRunning={state.isRunning} isStarted isDone={state.phase === 'done'} onStart={handleStart} onPause={pause} onReset={reset} />
         </>
       )}

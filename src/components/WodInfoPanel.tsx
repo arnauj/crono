@@ -9,6 +9,8 @@ export interface LoadedWod {
   mode: TimerMode;
   scheme?: string;
   movements?: string;
+  /** Free-text notes saved with a favorite, shown in full while training. */
+  description?: string;
 }
 
 /**
@@ -90,6 +92,11 @@ export function WodInfoPanel({ info }: { info: LoadedWod | null }) {
               </li>
             ))}
           </ul>
+        )}
+        {info.description && (
+          <p className="text-gray-200 text-3xl font-semibold leading-snug mt-4 whitespace-pre-wrap break-words">
+            {info.description}
+          </p>
         )}
       </div>
     </div>

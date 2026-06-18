@@ -169,11 +169,14 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
                           <ModeBadge mode={f.mode} />
                         </div>
                         <p className="text-gray-400 text-sm font-semibold">{favoriteSummary(f, t)}</p>
+                        {f.description && (
+                          <p className="text-gray-500 text-sm leading-snug mt-1 whitespace-pre-wrap break-words line-clamp-3">{f.description}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <LoadButton
                           label={t('library.load')}
-                          onClick={() => onLoad(f.mode, f.settings, { name: f.name, mode: f.mode, scheme: favoriteSummary(f, t) })}
+                          onClick={() => onLoad(f.mode, f.settings, { name: f.name, mode: f.mode, scheme: favoriteSummary(f, t), description: f.description })}
                         />
                         <button
                           onClick={() => deleteFav(f.id)}
