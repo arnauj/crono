@@ -108,6 +108,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'library.load': 'Load',
     'library.empty': 'No saved workouts yet. Configure a workout and tap the star to save it.',
     'library.delete': 'Delete',
+    'library.edit': 'Edit',
     // Loaded WOD panel
     'wod.show': 'Show workout',
     'wod.hide': 'Hide',
@@ -120,6 +121,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'favorite.description': 'Description',
     'favorite.descriptionPlaceholder': 'Movements, reps, notes…',
     'favorite.cancel': 'Cancel',
+    'favorite.editTitle': 'Edit workout',
+    'favorite.update': 'Save changes',
   },
   es: {
     'app.title': 'Crono',
@@ -209,6 +212,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'library.load': 'Cargar',
     'library.empty': 'Aún no hay entrenamientos guardados. Configura un entreno y pulsa la estrella para guardarlo.',
     'library.delete': 'Eliminar',
+    'library.edit': 'Editar',
     'wod.show': 'Mostrar entreno',
     'wod.hide': 'Ocultar',
     'favorite.title': 'Guardar como favorito',
@@ -219,6 +223,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'favorite.description': 'Descripción',
     'favorite.descriptionPlaceholder': 'Movimientos, repeticiones, notas…',
     'favorite.cancel': 'Cancelar',
+    'favorite.editTitle': 'Editar entreno',
+    'favorite.update': 'Guardar cambios',
   },
   de: {
     'app.title': 'Crono',
@@ -308,6 +314,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'library.load': 'Laden',
     'library.empty': 'Noch keine gespeicherten Workouts. Konfiguriere ein Workout und tippe auf den Stern.',
     'library.delete': 'Löschen',
+    'library.edit': 'Bearbeiten',
     'wod.show': 'Workout anzeigen',
     'wod.hide': 'Ausblenden',
     'favorite.title': 'Als Favorit speichern',
@@ -318,6 +325,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'favorite.description': 'Beschreibung',
     'favorite.descriptionPlaceholder': 'Übungen, Wiederholungen, Notizen…',
     'favorite.cancel': 'Abbrechen',
+    'favorite.editTitle': 'Workout bearbeiten',
+    'favorite.update': 'Änderungen speichern',
   },
   it: {
     'app.title': 'Crono',
@@ -407,6 +416,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'library.load': 'Carica',
     'library.empty': 'Nessun allenamento salvato. Configura un allenamento e tocca la stella per salvarlo.',
     'library.delete': 'Elimina',
+    'library.edit': 'Modifica',
     'wod.show': 'Mostra allenamento',
     'wod.hide': 'Nascondi',
     'favorite.title': 'Salva come preferito',
@@ -417,6 +427,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'favorite.description': 'Descrizione',
     'favorite.descriptionPlaceholder': 'Movimenti, ripetizioni, note…',
     'favorite.cancel': 'Annulla',
+    'favorite.editTitle': 'Modifica allenamento',
+    'favorite.update': 'Salva modifiche',
   },
 };
 
