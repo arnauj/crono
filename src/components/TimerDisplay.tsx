@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import type { TimerPhase } from '../types/timer';
-import { formatTime } from '../utils/format';
+import { formatTime, formatTimeCs } from '../utils/format';
+import { loadSetting } from '../utils/storage';
 import { useT } from '../hooks/useI18n';
 import { useRecorderFeed } from '../recording/context';
 
@@ -14,10 +16,53 @@ interface TimerDisplayProps {
   blockTotal?: number;
   typeLabel?: string;
   elapsed?: number;
+  /** Whether the work phase counts up (ForTime). Rest phases always count down. */
+  countUp?: boolean;
+  /** Live running state, so the centiseconds clock freezes while paused. */
+  isRunning?: boolean;
 }
 
-export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, blockLabel, blockIndex, blockTotal, typeLabel, elapsed }: TimerDisplayProps) {
+/**
+ * Renders the live MM:SS(.cc) clock. When centiseconds are enabled it drives its
+ * own requestAnimationFrame loop and interpolates the hundredths from the wall
+ * clock — anchored to each whole-second update from the timer, so it never
+ * drifts away from the authoritative integer time. Isolated in its own component
+ * so the per-frame re-renders don't ripple through the rest of the display.
+ */
+function TimerClock({ time, isRunning, countUp, showCentiseconds, className, style }: {
+  time: number;
+  isRunning: boolean;
+  countUp: boolean;
+  showCentiseconds: boolean;
+  className: string;
+  style: React.CSSProperties;
+}) {
+  const [csText, setCsText] = useState(() => formatTimeCs(time));
+
+  useEffect(() => {
+    if (!showCentiseconds) return;
+    // Anchor the interpolation to the commit of this whole-second value, then
+    // interpolate the hundredths from the wall clock on each animation frame.
+    // Re-anchoring every second keeps the centiseconds locked to the timer.
+    const anchor = performance.now();
+    let raf = 0;
+    const render = () => {
+      const since = isRunning ? Math.min((performance.now() - anchor) / 1000, 0.99) : 0;
+      const value = countUp ? time + since : Math.max(time - since, 0);
+      setCsText(formatTimeCs(value));
+      if (isRunning) raf = requestAnimationFrame(render);
+    };
+    raf = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(raf);
+  }, [time, isRunning, countUp, showCentiseconds]);
+
+  const text = showCentiseconds ? csText : formatTime(time);
+  return <time className={className} style={style}>{text}</time>;
+}
+
+export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, blockLabel, blockIndex, blockTotal, typeLabel, elapsed, countUp = false, isRunning = true }: TimerDisplayProps) {
   const t = useT();
+  const [showCentiseconds] = useState(() => loadSetting('show-centiseconds', false));
   const showBlockInfo = blockLabel != null && blockTotal != null && blockTotal > 0;
 
   // Feed the live training info to the video recorder (when enabled).
@@ -92,12 +137,14 @@ export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, 
             </p>
           )}
 
-          <time
+          <TimerClock
+            time={time}
+            isRunning={isRunning}
+            countUp={phase === 'work' && countUp}
+            showCentiseconds={showCentiseconds}
             className="timer-digits timer-glow text-white mt-3"
             style={{ fontSize: 'clamp(6rem, 28vw, 18rem)', lineHeight: 1 }}
-          >
-            {formatTime(time)}
-          </time>
+          />
         </div>
       )}
 

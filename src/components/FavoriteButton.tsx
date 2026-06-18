@@ -20,16 +20,18 @@ export function FavoriteButton({ mode, getSettings, defaultName = '' }: Favorite
   const t = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(defaultName);
+  const [description, setDescription] = useState('');
   const [saved, setSaved] = useState(false);
 
   const openDialog = () => {
     setName(defaultName);
+    setDescription('');
     setSaved(false);
     setOpen(true);
   };
 
   const submit = () => {
-    saveFavorite(name, mode, getSettings());
+    saveFavorite(name, mode, getSettings(), description);
     setSaved(true);
     window.setTimeout(() => setOpen(false), 850);
   };
@@ -95,6 +97,21 @@ export function FavoriteButton({ mode, getSettings, defaultName = '' }: Favorite
                   className="
                     w-full h-12 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08]
                     text-white text-base font-semibold
+                    focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/40
+                  "
+                />
+              </label>
+              <label className="flex flex-col gap-2">
+                <span className="text-gray-400 text-sm font-medium">{t('favorite.description')}</span>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t('favorite.descriptionPlaceholder')}
+                  rows={3}
+                  maxLength={500}
+                  className="
+                    w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08]
+                    text-white text-base font-medium resize-none
                     focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/40
                   "
                 />

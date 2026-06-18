@@ -36,7 +36,7 @@ export function AmrapMode({ onBack }: AmrapModeProps) {
         </div>
       ) : (
         <>
-          <TimerDisplay time={state.timeLeft} phase={state.phase} onClick={state.phase !== 'done' ? pause : undefined} typeLabel={t('mode.amrap')} elapsed={state.elapsed} />
+          <TimerDisplay time={state.timeLeft} phase={state.phase} onClick={state.phase !== 'done' ? pause : undefined} typeLabel={t('mode.amrap')} elapsed={state.elapsed} isRunning={state.isRunning} />
           <Controls isRunning={state.isRunning} isStarted isDone={state.phase === 'done'} onStart={handleStart} onPause={pause} onReset={reset} />
         </>
       )}

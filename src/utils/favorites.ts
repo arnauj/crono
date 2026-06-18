@@ -10,6 +10,8 @@ import { loadSetting, saveSetting } from './storage';
 export interface Favorite {
   id: string;
   name: string;
+  /** Optional free-text notes (movements, reps…) shown while training. */
+  description?: string;
   mode: TimerMode;
   settings: Record<string, unknown>;
   createdAt: number;
@@ -22,10 +24,11 @@ export function loadFavorites(): Favorite[] {
   return Array.isArray(list) ? list : [];
 }
 
-export function saveFavorite(name: string, mode: TimerMode, settings: Record<string, unknown>): Favorite {
+export function saveFavorite(name: string, mode: TimerMode, settings: Record<string, unknown>, description = ''): Favorite {
   const fav: Favorite = {
     id: `fav-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     name: name.trim() || 'WOD',
+    description: description.trim() || undefined,
     mode,
     settings,
     createdAt: Date.now(),

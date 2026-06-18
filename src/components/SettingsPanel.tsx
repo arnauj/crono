@@ -13,6 +13,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const t = useT();
   const [countdown, setCountdown] = useState(() => loadSetting('countdown-seconds', 10));
   const [soundOn, setSoundOn] = useState(() => loadSetting('sound-enabled', true));
+  const [centiseconds, setCentiseconds] = useState(() => loadSetting('show-centiseconds', false));
   const [lang, setLangState] = useState<Lang>(getLang);
   const { supported: recordingSupported, captionEnabled, toggleCaption } = useRecording();
 
@@ -28,6 +29,12 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     const next = !soundOn;
     setSoundOn(next);
     saveSetting('sound-enabled', next);
+  };
+
+  const toggleCentiseconds = () => {
+    const next = !centiseconds;
+    setCentiseconds(next);
+    saveSetting('show-centiseconds', next);
   };
 
   const changeLang = (newLang: Lang) => {
@@ -102,6 +109,26 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-lg hover:bg-white/[0.12] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
               >+</button>
             </div>
+          </div>
+
+          {/* Centiseconds */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-base font-semibold">{t('settings.centiseconds')}</p>
+              <p className="text-gray-500 text-sm">{t('settings.centisecondsDesc')}</p>
+            </div>
+            <button
+              onClick={toggleCentiseconds}
+              className={`
+                relative w-14 h-8 rounded-full transition-colors duration-200
+                ${centiseconds ? 'bg-cyan-500' : 'bg-white/[0.1]'}
+              `}
+            >
+              <span className={`
+                absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform duration-200
+                ${centiseconds ? 'translate-x-6' : 'translate-x-0'}
+              `} />
+            </button>
           </div>
 
           {/* Sound */}
