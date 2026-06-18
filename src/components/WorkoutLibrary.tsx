@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { TimerMode } from '../types/timer';
 import { WODS, type Wod, type WodCategory } from '../data/wods';
-import { loadFavorites, removeFavorite, type Favorite } from '../utils/favorites';
+import { loadFavorites, removeFavorite, updateFavorite, type Favorite } from '../utils/favorites';
 import { useT } from '../hooks/useI18n';
 import { t as tRaw } from '../utils/i18n';
 import { ModeBadge } from './ModeBadge';
@@ -61,6 +61,10 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
   const t = useT();
   const [tab, setTab] = useState<Tab>('girl');
   const [favorites, setFavorites] = useState<Favorite[]>(loadFavorites);
+  // The favorite currently being edited (name + description), if any.
+  const [editing, setEditing] = useState<Favorite | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   // Refresh the favorites list each time the library transitions to open
   // (adjusting state during render is React's recommended pattern for this).
@@ -82,6 +86,18 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
   ];
 
   const deleteFav = (id: string) => setFavorites(removeFavorite(id));
+
+  const openEdit = (f: Favorite) => {
+    setEditing(f);
+    setEditName(f.name);
+    setEditDescription(f.description ?? '');
+  };
+
+  const saveEdit = () => {
+    if (!editing) return;
+    setFavorites(updateFavorite(editing.id, { name: editName, description: editDescription }));
+    setEditing(null);
+  };
 
   const renderWod = (w: Wod) => (
     <li key={w.id} className="rounded-2xl bg-white/[0.025] border border-white/[0.06] p-4">
@@ -179,6 +195,14 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
                           onClick={() => onLoad(f.mode, f.settings, { name: f.name, mode: f.mode, scheme: favoriteSummary(f, t), description: f.description })}
                         />
                         <button
+                          onClick={() => openEdit(f)}
+                          aria-label={t('library.edit')}
+                          title={t('library.edit')}
+                          className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-amber-300 hover:bg-amber-400/10 active:scale-90 transition-all"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+                        </button>
+                        <button
                           onClick={() => deleteFav(f.id)}
                           aria-label={t('library.delete')}
                           title={t('library.delete')}
@@ -199,6 +223,77 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
           )}
         </div>
       </div>
+
+      {/* Edit dialog for a saved workout (name + description). */}
+      {editing && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center"
+          onClick={(e) => { e.stopPropagation(); setEditing(null); }}
+        >
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-sm mx-4 rounded-2xl bg-[#141414] border border-white/[0.08] shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/[0.06]">
+              <h3 className="text-white text-lg font-bold tracking-tight">{t('favorite.editTitle')}</h3>
+              <button
+                onClick={() => setEditing(null)}
+                aria-label={t('favorite.cancel')}
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:text-white hover:bg-white/[0.08] active:scale-90 transition-all"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <label className="flex flex-col gap-2">
+                <span className="text-gray-400 text-sm font-medium">{t('favorite.name')}</span>
+                <input
+                  autoFocus
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); }}
+                  placeholder={t('favorite.placeholder')}
+                  maxLength={40}
+                  className="
+                    w-full h-12 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08]
+                    text-white text-base font-semibold
+                    focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/40
+                  "
+                />
+              </label>
+              <label className="flex flex-col gap-2">
+                <span className="text-gray-400 text-sm font-medium">{t('favorite.description')}</span>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder={t('favorite.descriptionPlaceholder')}
+                  rows={3}
+                  maxLength={500}
+                  className="
+                    w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08]
+                    text-white text-base font-medium resize-none
+                    focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/40
+                  "
+                />
+              </label>
+              <button
+                onClick={saveEdit}
+                className="
+                  w-full h-12 flex items-center justify-center gap-2 rounded-xl
+                  bg-gradient-to-b from-amber-400 to-amber-500 text-black
+                  font-bold uppercase tracking-wider
+                  hover:from-amber-300 hover:to-amber-400 active:scale-[0.98] transition-all
+                "
+              >
+                {t('favorite.update')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

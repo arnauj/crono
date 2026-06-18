@@ -29,13 +29,16 @@ interface TimerDisplayProps {
  * drifts away from the authoritative integer time. Isolated in its own component
  * so the per-frame re-renders don't ripple through the rest of the display.
  */
-function TimerClock({ time, isRunning, countUp, showCentiseconds, className, style }: {
+function TimerClock({ time, isRunning, countUp, showCentiseconds, className, maxRem, lineHeight = 1 }: {
   time: number;
   isRunning: boolean;
   countUp: boolean;
   showCentiseconds: boolean;
   className: string;
-  style: React.CSSProperties;
+  /** Desktop cap, in rem. The on-screen size is the smaller of this and a
+   *  width-aware vw value so the digits can never run off a narrow screen. */
+  maxRem: number;
+  lineHeight?: number;
 }) {
   const [csText, setCsText] = useState(() => formatTimeCs(time));
 
@@ -57,7 +60,12 @@ function TimerClock({ time, isRunning, countUp, showCentiseconds, className, sty
   }, [time, isRunning, countUp, showCentiseconds]);
 
   const text = showCentiseconds ? csText : formatTime(time);
-  return <time className={className} style={style}>{text}</time>;
+  // Size the digits to the actual character count so a longer string (e.g. with
+  // centiseconds, or once minutes reach 3 digits) shrinks to stay on screen.
+  // The monospace digits occupy a fixed ~80vw of width regardless of length:
+  // a 5-char "MM:SS" lands at 28vw (the original size); 8 chars drop to ~17.5vw.
+  const fontSize = `min(${maxRem}rem, ${(140 / text.length).toFixed(2)}vw)`;
+  return <time className={className} style={{ fontSize, lineHeight }}>{text}</time>;
 }
 
 export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, blockLabel, blockIndex, blockTotal, typeLabel, elapsed, countUp = false, isRunning = true }: TimerDisplayProps) {
@@ -143,7 +151,7 @@ export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, 
             countUp={phase === 'work' && countUp}
             showCentiseconds={showCentiseconds}
             className="timer-digits timer-glow text-white mt-3"
-            style={{ fontSize: 'clamp(6rem, 28vw, 18rem)', lineHeight: 1 }}
+            maxRem={18}
           />
         </div>
       )}

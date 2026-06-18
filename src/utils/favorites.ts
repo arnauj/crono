@@ -44,6 +44,17 @@ export function removeFavorite(id: string): Favorite[] {
   return next;
 }
 
+/** Update the editable text fields of a saved workout (name + description). */
+export function updateFavorite(id: string, fields: { name: string; description: string }): Favorite[] {
+  const next = loadFavorites().map((f) =>
+    f.id === id
+      ? { ...f, name: fields.name.trim() || f.name, description: fields.description.trim() || undefined }
+      : f,
+  );
+  saveFavorites(next);
+  return next;
+}
+
 function saveFavorites(list: Favorite[]): void {
   saveSetting(KEY, list);
 }
