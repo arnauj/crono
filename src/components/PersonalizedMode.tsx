@@ -82,6 +82,26 @@ const allTypes: BlockType[] = ['tabata', 'fortime', 'emom', 'amrap', 'rest'];
 function ConfigRow({ label, value, onChange, min = 0, suffix }: {
   label: string; value: number; onChange: (v: number) => void; min?: number; suffix?: string;
 }) {
+  // While the user is typing we show their raw text (so the box can be
+  // emptied); the clamped number is committed on every valid keystroke.
+  const [draft, setDraft] = useState<string | null>(null);
+
+  const handleInput = (raw: string) => {
+    const digits = raw.replace(/\D/g, '');
+    if (digits === '') {
+      setDraft('');
+      return;
+    }
+    const v = parseInt(digits, 10);
+    setDraft(String(v)); // drops leading zeros: "010" -> "10"
+    onChange(Math.max(min, v));
+  };
+
+  const handleBlur = () => {
+    if (draft === '') onChange(Math.max(min, 0));
+    setDraft(null);
+  };
+
   return (
     <div className="flex items-center justify-between py-3">
       <span className="text-gray-400 text-base font-medium">
@@ -94,8 +114,11 @@ function ConfigRow({ label, value, onChange, min = 0, suffix }: {
           className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-xl hover:bg-white/[0.12] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
         >&minus;</button>
         <input
-          type="number" value={value} min={min}
-          onChange={(e) => onChange(Math.max(min, parseInt(e.target.value) || min))}
+          type="text" inputMode="numeric"
+          value={draft ?? String(value)}
+          onChange={(e) => handleInput(e.target.value)}
+          onBlur={handleBlur}
+          aria-label={`${label} value`}
           className="w-14 h-11 bg-white/[0.04] rounded-lg text-white text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-white/20"
         />
         <button
