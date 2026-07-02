@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface NumberInputProps {
   label: string;
   value: number;
@@ -8,8 +10,28 @@ interface NumberInputProps {
 }
 
 export function NumberInput({ label, value, onChange, min = 0, max = 999, suffix }: NumberInputProps) {
+  // While the user is typing we show their raw text (so the box can be
+  // emptied); the clamped number is committed on every valid keystroke.
+  const [draft, setDraft] = useState<string | null>(null);
+
   const decrement = () => onChange(Math.max(min, value - 1));
   const increment = () => onChange(Math.min(max, value + 1));
+
+  const handleInput = (raw: string) => {
+    const digits = raw.replace(/\D/g, '');
+    if (digits === '') {
+      setDraft('');
+      return;
+    }
+    const v = parseInt(digits, 10);
+    setDraft(String(v)); // drops leading zeros: "010" -> "10"
+    onChange(Math.max(min, Math.min(max, v)));
+  };
+
+  const handleBlur = () => {
+    if (draft === '') onChange(Math.max(min, 0));
+    setDraft(null);
+  };
 
   return (
     <div className="w-full">
@@ -38,14 +60,11 @@ export function NumberInput({ label, value, onChange, min = 0, max = 999, suffix
         </button>
 
         <input
-          type="number"
-          value={value}
-          onChange={(e) => {
-            const v = parseInt(e.target.value);
-            if (!isNaN(v)) onChange(Math.max(min, Math.min(max, v)));
-          }}
-          min={min}
-          max={max}
+          type="text"
+          inputMode="numeric"
+          value={draft ?? String(value)}
+          onChange={(e) => handleInput(e.target.value)}
+          onBlur={handleBlur}
           aria-label={`${label} value`}
           className="
             flex-1 h-16 md:h-18 min-w-0
