@@ -4,8 +4,6 @@ import { formatDurationBreakdown } from '../utils/format';
 
 type Unit = 'min' | 'sec';
 
-const MAX_SECONDS = 5999; // 99:59
-
 interface DurationInputProps {
   label: string;
   /** Source of truth: total duration in seconds. */
@@ -31,7 +29,7 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
   const step = unit === 'min' ? 60 : 1;
   const display = unit === 'min' ? Math.round(seconds / 60) : seconds;
 
-  const commit = (s: number) => onChange(Math.max(min, Math.min(MAX_SECONDS, Math.round(s))));
+  const commit = (s: number) => onChange(Math.max(min, Math.round(s)));
 
   const handleInput = (raw: string) => {
     const digits = raw.replace(/\D/g, '');
@@ -52,8 +50,8 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
   const toggleUnit = () => {
     setDraft(null);
     if (unit === 'sec') {
-      // Snap to a whole minute so the minutes box always shows an exact integer.
-      commit(Math.max(seconds > 0 ? 1 : 0, Math.round(seconds / 60)) * 60);
+      // Discard leftover seconds so the minutes box shows an exact integer.
+      commit(Math.floor(seconds / 60) * 60);
       setUnit('min');
     } else {
       setUnit('sec');
@@ -61,7 +59,6 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
   };
 
   const atMin = seconds <= min;
-  const atMax = seconds >= MAX_SECONDS;
 
   // Small "1 h 30 m 1 s" breakdown, shown once the value spills past its unit
   // (>= 60 min, or >= 60 sec). Hidden while the box is emptied mid-edit.
@@ -112,7 +109,6 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
             />
             <button
               onClick={() => commit(seconds + step)}
-              disabled={atMax}
               aria-label={`Increase ${label}`}
               className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-xl hover:bg-white/[0.12] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
             >+</button>
@@ -177,7 +173,6 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
 
         <button
           onClick={() => commit(seconds + step)}
-          disabled={atMax}
           aria-label={`Increase ${label}`}
           className="
             shrink-0 w-16 h-16 md:w-18 md:h-18
