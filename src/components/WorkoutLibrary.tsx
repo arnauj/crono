@@ -100,7 +100,7 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
   };
 
   const renderWod = (w: Wod) => (
-    <li key={w.id} className="rounded-2xl bg-white/[0.025] border border-white/[0.06] p-4">
+    <li key={w.id} className="rounded-2xl bg-white/[0.05] border border-white/[0.12] inset-shadow-[0_1px_0_rgba(255,255,255,0.08)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 mb-1.5">
@@ -122,7 +122,7 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-md mx-4 max-h-[85vh] flex flex-col rounded-2xl bg-[#141414] border border-white/[0.08] shadow-2xl overflow-hidden"
+        className="relative w-full max-w-md mx-4 max-h-[85vh] flex flex-col glass-strong rounded-3xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -153,7 +153,7 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
                 className={`
                   flex-1 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all
                   ${active
-                    ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30'
+                    ? 'bg-amber-400/20 text-amber-200 border border-amber-300/40 backdrop-blur-md'
                     : 'text-gray-500 border border-transparent hover:text-gray-300 hover:bg-white/[0.04]'
                   }
                 `}
@@ -177,7 +177,7 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
             ) : (
               <ul className="flex flex-col gap-2.5">
                 {favorites.map((f) => (
-                  <li key={f.id} className="rounded-2xl bg-white/[0.025] border border-white/[0.06] p-4">
+                  <li key={f.id} className="rounded-2xl bg-white/[0.05] border border-white/[0.12] inset-shadow-[0_1px_0_rgba(255,255,255,0.08)] p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2.5 mb-1.5">
@@ -232,7 +232,7 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
         >
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-sm mx-4 rounded-2xl bg-[#141414] border border-white/[0.08] shadow-2xl overflow-hidden"
+            className="relative w-full max-w-sm mx-4 glass-strong rounded-3xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/[0.06]">
@@ -258,7 +258,7 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
                   placeholder={t('favorite.placeholder')}
                   maxLength={40}
                   className="
-                    w-full h-12 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08]
+                    glass-input w-full h-12 px-4 rounded-xl
                     text-white text-base font-semibold
                     focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/40
                   "
@@ -273,7 +273,7 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
                   rows={3}
                   maxLength={500}
                   className="
-                    w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08]
+                    glass-input w-full px-4 py-3 rounded-xl
                     text-white text-base font-medium resize-none
                     focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/40
                   "
@@ -283,9 +283,10 @@ export function WorkoutLibrary({ open, onClose, onLoad }: WorkoutLibraryProps) {
                 onClick={saveEdit}
                 className="
                   w-full h-12 flex items-center justify-center gap-2 rounded-xl
-                  bg-gradient-to-b from-amber-400 to-amber-500 text-black
+                  bg-amber-400/25 border border-amber-300/40 text-amber-50 backdrop-blur-xl
+                  inset-shadow-[0_1px_0_rgba(255,255,255,0.15)] shadow-lg shadow-amber-500/15
                   font-bold uppercase tracking-wider
-                  hover:from-amber-300 hover:to-amber-400 active:scale-[0.98] transition-all
+                  hover:bg-amber-400/35 hover:border-amber-200/50 active:scale-[0.98] transition-all
                 "
               >
                 {t('favorite.update')}

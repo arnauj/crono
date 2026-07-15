@@ -141,12 +141,10 @@ function App() {
   })();
 
   const iconBtnClass = `
-    flex items-center justify-center w-12 h-12 rounded-2xl
-    bg-white/[0.06] border border-white/[0.08]
-    text-gray-300
-    hover:bg-white/[0.12] hover:text-white hover:border-white/[0.15]
+    glass flex items-center justify-center w-12 h-12 rounded-2xl
+    text-gray-200
+    hover:bg-white/[0.14] hover:text-white
     active:scale-95 transition-all duration-200
-    backdrop-blur-sm
   `;
 
   const libraryButton = (

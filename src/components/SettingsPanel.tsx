@@ -46,7 +46,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-sm mx-4 rounded-2xl bg-[#141414] border border-white/[0.08] shadow-2xl overflow-hidden"
+        className="relative w-full max-w-sm mx-4 glass-strong rounded-3xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -79,8 +79,8 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                   className={`
                     py-2.5 rounded-xl text-sm font-semibold transition-all
                     ${lang === l.id
-                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                      : 'bg-white/[0.04] text-gray-400 border border-transparent hover:bg-white/[0.08] hover:text-white'
+                      ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-400/40 backdrop-blur-md'
+                      : 'bg-white/[0.06] text-gray-300 border border-white/[0.10] hover:bg-white/[0.10] hover:text-white'
                     }
                   `}
                 >
@@ -100,13 +100,13 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               <button
                 onClick={() => updateCountdown(countdown - 1)}
                 disabled={countdown <= 3}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-lg hover:bg-white/[0.12] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
+                className="w-10 h-10 flex items-center justify-center glass-input rounded-xl text-gray-300 text-lg hover:bg-white/[0.14] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
               >&minus;</button>
               <span className="w-10 text-center text-white text-lg font-bold tabular-nums">{countdown}s</span>
               <button
                 onClick={() => updateCountdown(countdown + 1)}
                 disabled={countdown >= 30}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-lg hover:bg-white/[0.12] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
+                className="w-10 h-10 flex items-center justify-center glass-input rounded-xl text-gray-300 text-lg hover:bg-white/[0.14] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
               >+</button>
             </div>
           </div>
@@ -121,7 +121,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               onClick={toggleCentiseconds}
               className={`
                 relative w-14 h-8 rounded-full transition-colors duration-200
-                ${centiseconds ? 'bg-cyan-500' : 'bg-white/[0.1]'}
+                ${centiseconds ? 'bg-cyan-500/70 border border-cyan-300/40' : 'bg-white/[0.12] border border-white/[0.15]'}
               `}
             >
               <span className={`
@@ -141,7 +141,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               onClick={toggleSound}
               className={`
                 relative w-14 h-8 rounded-full transition-colors duration-200
-                ${soundOn ? 'bg-cyan-500' : 'bg-white/[0.1]'}
+                ${soundOn ? 'bg-cyan-500/70 border border-cyan-300/40' : 'bg-white/[0.12] border border-white/[0.15]'}
               `}
             >
               <span className={`
@@ -162,7 +162,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 onClick={toggleCaption}
                 className={`
                   relative w-14 h-8 rounded-full transition-colors duration-200
-                  ${captionEnabled ? 'bg-cyan-500' : 'bg-white/[0.1]'}
+                  ${captionEnabled ? 'bg-cyan-500/70 border border-cyan-300/40' : 'bg-white/[0.12] border border-white/[0.15]'}
                 `}
               >
                 <span className={`

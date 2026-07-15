@@ -21,10 +21,12 @@ export function VideoRecordButton() {
       title={t('record.title')}
       className={`
         relative flex items-center justify-center w-12 h-12 rounded-2xl
-        border transition-all duration-200 active:scale-95 backdrop-blur-sm
+        border transition-all duration-200 active:scale-95
+        backdrop-blur-xl backdrop-saturate-150 shadow-lg
+        inset-shadow-[0_1px_0_rgba(255,255,255,0.12)]
         ${enabled
-          ? 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30 hover:text-red-300'
-          : 'bg-white/[0.06] border-white/[0.08] text-gray-300 hover:bg-white/[0.12] hover:text-white hover:border-white/[0.15]'
+          ? 'bg-red-500/20 border-red-400/40 text-red-300 hover:bg-red-500/30 hover:text-red-200'
+          : 'bg-white/[0.07] border-white/[0.14] text-gray-200 hover:bg-white/[0.14] hover:text-white hover:border-white/[0.25]'
         }
       `}
     >
@@ -332,7 +334,7 @@ export function RecordingResultModal() {
     <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={clearResult}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-sm mx-4 rounded-2xl bg-[#141414] border border-white/[0.08] shadow-2xl overflow-hidden"
+        className="relative w-full max-w-sm mx-4 glass-strong rounded-3xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/[0.06]">
@@ -357,7 +359,7 @@ export function RecordingResultModal() {
           <div className="flex gap-3">
             <button
               onClick={download}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold hover:bg-cyan-500/30 active:scale-[0.98] transition-all"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 backdrop-blur-md font-semibold hover:bg-cyan-500/30 active:scale-[0.98] transition-all"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               {t('record.download')}
@@ -365,7 +367,7 @@ export function RecordingResultModal() {
             {canShare && (
               <button
                 onClick={share}
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/[0.06] text-gray-200 border border-white/[0.1] font-semibold hover:bg-white/[0.12] active:scale-[0.98] transition-all"
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/[0.07] text-gray-200 border border-white/[0.14] backdrop-blur-md font-semibold hover:bg-white/[0.14] active:scale-[0.98] transition-all"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
                 {t('record.share')}

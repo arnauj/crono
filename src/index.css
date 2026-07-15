@@ -12,11 +12,75 @@ button, a, [role="button"], input[type="button"], input[type="submit"], select, 
 
 body {
   font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
-  background: #0a0a0a;
+  background: #070b14;
   color: #fff;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+}
+
+/* ── Glassmorphism foundation ─────────────────────────────────────────────
+   Ambient "aurora" backdrops (colored radial glows over a deep navy base)
+   give the frosted surfaces something to blur, and .glass* utilities define
+   the shared frosted-panel recipe: translucent fill, backdrop blur with a
+   saturation boost, a light top edge, and a soft drop shadow. */
+
+@layer components {
+.aurora-bg {
+  background-color: #070b14;
+  background-image:
+    radial-gradient(42% 38% at 12% 18%, rgba(59, 130, 246, 0.28), transparent 70%),
+    radial-gradient(38% 32% at 88% 12%, rgba(168, 85, 247, 0.24), transparent 70%),
+    radial-gradient(46% 42% at 78% 88%, rgba(6, 182, 212, 0.20), transparent 70%),
+    radial-gradient(36% 32% at 18% 82%, rgba(244, 63, 94, 0.16), transparent 70%);
+}
+
+/* Phase overlays crossfaded on top of .aurora-bg while training */
+.aurora-rest {
+  background-image:
+    radial-gradient(55% 50% at 20% 25%, rgba(16, 185, 129, 0.30), transparent 70%),
+    radial-gradient(50% 45% at 80% 80%, rgba(5, 150, 105, 0.24), transparent 70%),
+    radial-gradient(40% 35% at 85% 15%, rgba(45, 212, 191, 0.16), transparent 70%);
+  background-color: rgba(4, 24, 17, 0.55);
+}
+.aurora-countdown {
+  background-image:
+    radial-gradient(55% 50% at 25% 20%, rgba(59, 130, 246, 0.30), transparent 70%),
+    radial-gradient(50% 45% at 78% 82%, rgba(99, 102, 241, 0.26), transparent 70%),
+    radial-gradient(40% 35% at 85% 15%, rgba(14, 165, 233, 0.18), transparent 70%);
+  background-color: rgba(6, 12, 32, 0.55);
+}
+
+/* Frosted panel: cards, toolbars, inputs */
+.glass {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Heavier frosted sheet for modals/dialogs floating over everything */
+.glass-strong {
+  background: rgba(22, 28, 45, 0.55);
+  backdrop-filter: blur(36px) saturate(180%);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* Frosted text/number inputs */
+.glass-input {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
 }
 
 .timer-digits {
@@ -34,11 +98,6 @@ input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
-}
-
-/* Smooth background color transitions */
-.bg-transition {
-  transition: background-color 0.5s ease;
 }
 
 /* Pulse for countdown digits */

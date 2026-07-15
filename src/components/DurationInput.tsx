@@ -73,8 +73,8 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
       aria-label={`${label} unit: ${unit === 'min' ? t('suffix.minutes') : t('suffix.seconds')}. Tap to switch.`}
       className={
         compact
-          ? 'flex items-center gap-1 h-11 px-2.5 rounded-lg bg-white/[0.06] text-[11px] font-bold uppercase tracking-wider hover:bg-white/[0.12] active:scale-90 transition-all'
-          : 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.07] text-xs font-bold uppercase tracking-wider hover:bg-white/[0.12] active:scale-95 transition-all'
+          ? 'glass-input flex items-center gap-1 h-11 px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-white/[0.14] active:scale-90 transition-all'
+          : 'glass-input flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-white/[0.14] active:scale-95 transition-all'
       }
     >
       <span className={unit === 'min' ? 'text-white' : 'text-gray-600'}>{t('suffix.min')}</span>
@@ -96,7 +96,7 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
               onClick={() => commit(seconds - step)}
               disabled={atMin}
               aria-label={`Decrease ${label}`}
-              className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-xl hover:bg-white/[0.12] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
+              className="glass-input w-11 h-11 flex items-center justify-center rounded-xl text-gray-300 text-xl hover:bg-white/[0.14] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
             >&minus;</button>
             <input
               type="text"
@@ -105,12 +105,12 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
               onChange={(e) => handleInput(e.target.value)}
               onBlur={handleBlur}
               aria-label={`${label} value`}
-              className="w-14 h-11 bg-white/[0.04] rounded-lg text-white text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-white/20"
+              className="glass-input w-14 h-11 rounded-lg text-white text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-white/25"
             />
             <button
               onClick={() => commit(seconds + step)}
               aria-label={`Increase ${label}`}
-              className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-xl hover:bg-white/[0.12] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
+              className="glass-input w-11 h-11 flex items-center justify-center rounded-xl text-gray-300 text-xl hover:bg-white/[0.14] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
             >+</button>
           </div>
         </div>
@@ -137,9 +137,9 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
           aria-label={`Decrease ${label}`}
           className="
             shrink-0 w-16 h-16 md:w-18 md:h-18
-            flex items-center justify-center rounded-xl
-            bg-white/[0.07] text-white text-3xl
-            hover:bg-white/[0.12]
+            glass-input flex items-center justify-center rounded-xl
+            text-white text-3xl
+            hover:bg-white/[0.14]
             active:scale-90
             disabled:opacity-20 disabled:active:scale-100
             transition-all
@@ -156,10 +156,9 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
             aria-label={`${label} value`}
             className={`
               w-full h-16 md:h-18
-              rounded-xl bg-white/[0.05]
+              glass-input rounded-xl
               text-white text-center text-4xl md:text-5xl font-bold
-              border-none
-              focus:outline-none focus:ring-2 focus:ring-white/20
+              focus:outline-none focus:ring-2 focus:ring-white/25
               transition-all
               ${breakdown ? 'pb-4' : ''}
             `}
@@ -176,9 +175,9 @@ export function DurationInput({ label, seconds, onChange, min = 0, compact = fal
           aria-label={`Increase ${label}`}
           className="
             shrink-0 w-16 h-16 md:w-18 md:h-18
-            flex items-center justify-center rounded-xl
-            bg-white/[0.07] text-white text-3xl
-            hover:bg-white/[0.12]
+            glass-input flex items-center justify-center rounded-xl
+            text-white text-3xl
+            hover:bg-white/[0.14]
             active:scale-90
             disabled:opacity-20 disabled:active:scale-100
             transition-all
