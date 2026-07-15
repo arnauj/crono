@@ -41,13 +41,12 @@ export function WodInfoPanel({ info }: { info: LoadedWod | null }) {
         aria-label={t('wod.show')}
         title={`${t('wod.show')} · ${info.name}`}
         className="
-          hidden md:flex fixed bottom-6 left-6 z-30 items-center justify-center
+          glass hidden md:flex fixed bottom-6 left-6 z-30 items-center justify-center
           w-16 h-16 rounded-2xl
-          bg-white/[0.06] border border-white/[0.08]
           text-amber-300
-          hover:bg-white/[0.12] hover:text-amber-200 hover:border-white/[0.15]
+          hover:bg-white/[0.14] hover:text-amber-200
           active:scale-95 transition-all duration-200
-          backdrop-blur-sm wod-panel-in
+          wod-panel-in
         "
       >
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -67,7 +66,7 @@ export function WodInfoPanel({ info }: { info: LoadedWod | null }) {
 
   return (
     <div className="hidden md:block fixed bottom-6 left-6 z-30 w-[34rem] max-w-[calc(100vw-3rem)] wod-panel-in">
-      <div className="rounded-3xl bg-[#141414]/85 border border-white/[0.08] shadow-2xl backdrop-blur-md p-8">
+      <div className="glass-strong rounded-3xl shadow-2xl p-8">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <ModeBadge mode={info.mode} />

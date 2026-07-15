@@ -44,8 +44,7 @@ export function FavoriteButton({ mode, getSettings, defaultName = '' }: Favorite
         aria-label={t('favorite.title')}
         title={t('favorite.title')}
         className="
-          shrink-0 w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-2xl
-          bg-white/[0.04] border border-white/[0.08]
+          glass shrink-0 w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-2xl
           text-gray-400 text-sm font-semibold uppercase tracking-wider
           hover:bg-amber-400/10 hover:border-amber-400/30 hover:text-amber-300
           active:scale-[0.98] transition-all
@@ -64,7 +63,7 @@ export function FavoriteButton({ mode, getSettings, defaultName = '' }: Favorite
         >
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-sm mx-4 rounded-2xl bg-[#141414] border border-white/[0.08] shadow-2xl overflow-hidden"
+            className="relative w-full max-w-sm mx-4 glass-strong rounded-3xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/[0.06]">
@@ -95,7 +94,7 @@ export function FavoriteButton({ mode, getSettings, defaultName = '' }: Favorite
                   placeholder={t('favorite.placeholder')}
                   maxLength={40}
                   className="
-                    w-full h-12 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08]
+                    glass-input w-full h-12 px-4 rounded-xl
                     text-white text-base font-semibold
                     focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/40
                   "
@@ -110,7 +109,7 @@ export function FavoriteButton({ mode, getSettings, defaultName = '' }: Favorite
                   rows={3}
                   maxLength={500}
                   className="
-                    w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08]
+                    glass-input w-full px-4 py-3 rounded-xl
                     text-white text-base font-medium resize-none
                     focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/40
                   "
@@ -121,9 +120,10 @@ export function FavoriteButton({ mode, getSettings, defaultName = '' }: Favorite
                 disabled={saved}
                 className="
                   w-full h-12 flex items-center justify-center gap-2 rounded-xl
-                  bg-gradient-to-b from-amber-400 to-amber-500 text-black
+                  bg-amber-400/25 border border-amber-300/40 text-amber-50 backdrop-blur-xl
+                  inset-shadow-[0_1px_0_rgba(255,255,255,0.15)] shadow-lg shadow-amber-500/15
                   font-bold uppercase tracking-wider
-                  hover:from-amber-300 hover:to-amber-400 active:scale-[0.98]
+                  hover:bg-amber-400/35 hover:border-amber-200/50 active:scale-[0.98]
                   disabled:opacity-100 transition-all
                 "
               >

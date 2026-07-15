@@ -48,9 +48,9 @@ export function NumberInput({ label, value, onChange, min = 0, max = 999, suffix
           aria-label={`Decrease ${label}`}
           className="
             shrink-0 w-16 h-16 md:w-18 md:h-18
-            flex items-center justify-center rounded-xl
-            bg-white/[0.07] text-white text-3xl
-            hover:bg-white/[0.12]
+            glass-input flex items-center justify-center rounded-xl
+            text-white text-3xl
+            hover:bg-white/[0.14]
             active:scale-90
             disabled:opacity-20 disabled:active:scale-100
             transition-all
@@ -68,10 +68,9 @@ export function NumberInput({ label, value, onChange, min = 0, max = 999, suffix
           aria-label={`${label} value`}
           className="
             flex-1 h-16 md:h-18 min-w-0
-            rounded-xl bg-white/[0.05]
+            glass-input rounded-xl
             text-white text-center text-4xl md:text-5xl font-bold
-            border-none
-            focus:outline-none focus:ring-2 focus:ring-white/20
+            focus:outline-none focus:ring-2 focus:ring-white/25
             transition-all
           "
         />
@@ -82,9 +81,9 @@ export function NumberInput({ label, value, onChange, min = 0, max = 999, suffix
           aria-label={`Increase ${label}`}
           className="
             shrink-0 w-16 h-16 md:w-18 md:h-18
-            flex items-center justify-center rounded-xl
-            bg-white/[0.07] text-white text-3xl
-            hover:bg-white/[0.12]
+            glass-input flex items-center justify-center rounded-xl
+            text-white text-3xl
+            hover:bg-white/[0.14]
             active:scale-90
             disabled:opacity-20 disabled:active:scale-100
             transition-all

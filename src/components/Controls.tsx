@@ -12,6 +12,9 @@ interface ControlsProps {
 
 const base = `
   rounded-2xl font-bold uppercase tracking-widest
+  backdrop-blur-xl backdrop-saturate-150
+  border
+  inset-shadow-[0_1px_0_rgba(255,255,255,0.15)]
   active:scale-[0.97] transition-all duration-150
   focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black
   shadow-lg
@@ -34,8 +37,8 @@ export function Controls({ isRunning, isStarted, isDone, onStart, onPause, onRes
               relative w-full h-18 md:h-20 text-lg md:text-xl tracking-wide leading-tight
               flex items-center justify-center gap-3 px-4
               ${armed
-                ? 'bg-white/[0.06] border border-red-500/40 text-red-300 hover:bg-white/[0.1] shadow-none'
-                : 'bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-400 hover:to-red-500 focus-visible:ring-red-400 shadow-red-500/25'
+                ? 'bg-white/[0.06] border-red-500/40 text-red-300 hover:bg-white/[0.1] shadow-none'
+                : 'bg-red-500/25 border-red-400/40 text-red-100 hover:bg-red-500/35 hover:border-red-300/50 focus-visible:ring-red-400 shadow-red-500/20'
               }
             `}
           >
@@ -67,11 +70,10 @@ export function Controls({ isRunning, isStarted, isDone, onStart, onPause, onRes
           onClick={onStart}
           className={`${base}
             w-full h-18 md:h-20 text-2xl md:text-3xl
-            bg-gradient-to-b from-green-400 to-green-500
-            text-black
-            hover:from-green-300 hover:to-green-400
+            bg-green-400/25 border-green-300/40 text-green-50
+            hover:bg-green-400/35 hover:border-green-200/50
             focus-visible:ring-green-400
-            shadow-green-500/25
+            shadow-green-500/20
           `}
         >
           {isDone ? t('btn.restart') : t('btn.start')}
@@ -86,8 +88,8 @@ export function Controls({ isRunning, isStarted, isDone, onStart, onPause, onRes
         onClick={onPause}
         className={`${base} flex-1 h-18 md:h-20 text-xl md:text-2xl ${
           isRunning
-            ? 'bg-gradient-to-b from-yellow-300 to-yellow-400 text-black hover:from-yellow-200 hover:to-yellow-300 focus-visible:ring-yellow-400 shadow-yellow-400/20'
-            : 'bg-gradient-to-b from-green-400 to-green-500 text-black hover:from-green-300 hover:to-green-400 focus-visible:ring-green-400 shadow-green-500/20'
+            ? 'bg-yellow-300/25 border-yellow-200/40 text-yellow-50 hover:bg-yellow-300/35 hover:border-yellow-100/50 focus-visible:ring-yellow-400 shadow-yellow-400/15'
+            : 'bg-green-400/25 border-green-300/40 text-green-50 hover:bg-green-400/35 hover:border-green-200/50 focus-visible:ring-green-400 shadow-green-500/20'
         }`}
       >
         {isRunning ? t('btn.pause') : t('btn.resume')}
@@ -96,9 +98,9 @@ export function Controls({ isRunning, isStarted, isDone, onStart, onPause, onRes
         onClick={onReset}
         className={`${base}
           flex-1 h-18 md:h-20 text-xl md:text-2xl
-          bg-gradient-to-b from-white/[0.08] to-white/[0.04]
-          text-gray-300 border border-white/[0.1]
-          hover:from-white/[0.12] hover:to-white/[0.08] hover:text-white
+          bg-white/[0.07] border-white/[0.15]
+          text-gray-200
+          hover:bg-white/[0.12] hover:text-white hover:border-white/[0.25]
           focus-visible:ring-white/40
           shadow-none
         `}

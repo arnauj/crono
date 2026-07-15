@@ -111,7 +111,7 @@ function ConfigRow({ label, value, onChange, min = 0, suffix }: {
         <button
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-xl hover:bg-white/[0.12] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
+          className="glass-input w-11 h-11 flex items-center justify-center rounded-xl text-gray-300 text-xl hover:bg-white/[0.14] hover:text-white active:scale-90 disabled:opacity-20 transition-all"
         >&minus;</button>
         <input
           type="text" inputMode="numeric"
@@ -119,11 +119,11 @@ function ConfigRow({ label, value, onChange, min = 0, suffix }: {
           onChange={(e) => handleInput(e.target.value)}
           onBlur={handleBlur}
           aria-label={`${label} value`}
-          className="w-14 h-11 bg-white/[0.04] rounded-lg text-white text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-white/20"
+          className="glass-input w-14 h-11 rounded-lg text-white text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-white/25"
         />
         <button
           onClick={() => onChange(value + 1)}
-          className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.06] text-gray-300 text-xl hover:bg-white/[0.12] hover:text-white active:scale-90 transition-all"
+          className="glass-input w-11 h-11 flex items-center justify-center rounded-xl text-gray-300 text-xl hover:bg-white/[0.14] hover:text-white active:scale-90 transition-all"
         >+</button>
       </div>
     </div>
@@ -206,7 +206,7 @@ function BlockCard({ block, index, total, expanded, onToggle, onChange, onRemove
   if (!expanded) {
     return (
       <div
-        className={`rounded-2xl bg-white/[0.025] border border-white/[0.06] border-l-[4px] ${colors.accent} cursor-pointer hover:bg-white/[0.04] transition-all`}
+        className={`rounded-2xl bg-white/[0.05] backdrop-blur-xl backdrop-saturate-150 border border-white/[0.12] inset-shadow-[0_1px_0_rgba(255,255,255,0.08)] border-l-[4px] ${colors.accent} cursor-pointer hover:bg-white/[0.08] transition-all`}
         onClick={onToggle}
       >
         <div className="flex items-center justify-between px-5 py-3">
@@ -227,7 +227,7 @@ function BlockCard({ block, index, total, expanded, onToggle, onChange, onRemove
 
   /* ── Expanded view ── */
   return (
-    <div className={`rounded-2xl bg-white/[0.025] border border-white/[0.06] border-l-[4px] ${colors.accent} overflow-hidden`}>
+    <div className={`rounded-2xl bg-white/[0.05] backdrop-blur-xl backdrop-saturate-150 border border-white/[0.12] inset-shadow-[0_1px_0_rgba(255,255,255,0.08)] border-l-[4px] ${colors.accent} overflow-hidden`}>
 
       {/* ── Card header ── */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 cursor-pointer" onClick={onToggle}>
@@ -452,7 +452,7 @@ export function PersonalizedMode({ onBack }: PersonalizedModeProps) {
             </button>
 
             {/* Global rounds */}
-            <div className="rounded-2xl bg-white/[0.025] border border-white/[0.06] px-5 py-1">
+            <div className="rounded-2xl bg-white/[0.05] backdrop-blur-xl backdrop-saturate-150 border border-white/[0.12] inset-shadow-[0_1px_0_rgba(255,255,255,0.08)] px-5 py-1">
               <ConfigRow label={t('label.totalRounds')} value={totalRounds} onChange={setTotalRounds} min={1} />
             </div>
             <Controls isRunning={false} isStarted={false} isDone={false} onStart={handleStart} onPause={() => {}} onReset={() => {}} />

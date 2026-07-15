@@ -130,7 +130,11 @@ export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, 
           {blockInfoEl}
           <span className={`
             inline-block px-10 py-3 rounded-full font-extrabold uppercase tracking-[0.3em]
-            ${phase === 'rest' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/15 text-red-400'}
+            backdrop-blur-xl backdrop-saturate-150 border
+            inset-shadow-[0_1px_0_rgba(255,255,255,0.12)]
+            ${phase === 'rest'
+              ? 'bg-green-500/20 border-green-300/30 text-green-300'
+              : 'bg-red-500/15 border-red-300/30 text-red-300'}
           `}
             style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)' }}
           >
@@ -159,7 +163,7 @@ export function TimerDisplay({ time, phase, currentRound, totalRounds, onClick, 
       {/* Done */}
       {phase === 'done' && (
         <div className="flex flex-col items-center">
-          <span className="inline-block px-10 py-3 rounded-full font-extrabold uppercase tracking-[0.3em] bg-green-500/20 text-green-400 mb-6" style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)' }}>
+          <span className="inline-block px-10 py-3 rounded-full font-extrabold uppercase tracking-[0.3em] backdrop-blur-xl backdrop-saturate-150 border border-green-300/30 inset-shadow-[0_1px_0_rgba(255,255,255,0.12)] bg-green-500/20 text-green-300 mb-6" style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)' }}>
             {t('timer.complete')}
           </span>
           <time
